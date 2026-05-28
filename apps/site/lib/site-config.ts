@@ -1,0 +1,66 @@
+import type { ContentModelConfig, SiteConfig } from "@global-trade/core";
+import { FrontendDataClient, validateSiteConfig } from "@global-trade/core";
+import { createBrowserSupabaseClient, isSupabaseConfigured } from "./supabase";
+
+export const siteConfig: SiteConfig = {
+  name: "Global Trade Starter",
+  domain: process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com",
+  locale: "en",
+  inquiryEmail: process.env.INQUIRY_TO_EMAIL ?? "sales@example.com",
+  inquiryPhone: "+86 136-8588-2988",
+  inquiryWhatsApp: "+86 136-8588-2988",
+  defaultSeo: {
+    title: "Global Trade Starter | Product Showcase",
+    description: "A reusable foreign-trade showcase site powered by EdgeOne Pages and Supabase.",
+    noindex: false
+  },
+  pageSeo: {
+    home: {
+      title: "INSHOW HOME | Full range customization",
+      description: "B2B prefab house, building materials, and smart home product showcase."
+    },
+    products: {
+      title: "Products | INSHOW HOME",
+      description: "Explore INSHOW HOME product categories and send detailed inquiries."
+    },
+    news: {
+      title: "News | INSHOW HOME",
+      description: "Company news, product updates, and frequently asked questions from INSHOW HOME."
+    },
+    contact: {
+      title: "Contact | INSHOW HOME",
+      description: "Contact INSHOW HOME for custom product requirements and quotations."
+    }
+  },
+  navigation: [
+    { label: "Products", href: "/products" },
+    { label: "News", href: "/news" },
+    { label: "Contact", href: "/contact" }
+  ],
+  footer: [
+    {
+      title: "Company",
+      links: [
+        { label: "About", href: "/about" },
+        { label: "Contact", href: "/contact" }
+      ]
+    }
+  ]
+};
+
+export async function getRuntimeSiteConfig(): Promise<SiteConfig> {
+  if (!isSupabaseConfigured()) return siteConfig;
+  try {
+    const remote = await new FrontendDataClient({ supabase: createBrowserSupabaseClient() }).getSiteConfig();
+    return remote ? validateSiteConfig({ ...siteConfig, ...remote }) : siteConfig;
+  } catch {
+    return siteConfig;
+  }
+}
+
+export const contentModelConfig: ContentModelConfig = {
+  products: true,
+  posts: true,
+  pages: true,
+  inquiries: true
+};
