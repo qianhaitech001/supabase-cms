@@ -4,7 +4,7 @@ import { createBrowserSupabaseClient, isSupabaseConfigured } from "./supabase";
 
 export const siteConfig: SiteConfig = {
   name: "Global Trade Starter",
-  domain: process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com",
+  domain: getSiteDomain(),
   locale: "en",
   inquiryEmail: process.env.INQUIRY_TO_EMAIL ?? "sales@example.com",
   inquiryPhone: "+86 136-8588-2988",
@@ -64,3 +64,14 @@ export const contentModelConfig: ContentModelConfig = {
   pages: true,
   inquiries: true
 };
+
+function getSiteDomain() {
+  const value = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!value) return "https://example.com";
+
+  try {
+    return new URL(value).origin;
+  } catch {
+    return "https://example.com";
+  }
+}
