@@ -1,3 +1,4 @@
+import type { Post } from "@global-trade/core";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { listPosts } from "@/lib/data";
@@ -7,32 +8,55 @@ export const revalidate = 0;
 
 export default async function NewsPage() {
   const posts = await listPosts();
+  const [featuredPost, ...remainingPosts] = posts;
+  const newsItems = remainingPosts.slice(0, 6);
+
   return (
-    <main>
-      <section className="page-hero">
-        <div className="shell">
-          <p className="text-sm font-black uppercase tracking-[0.18em] text-[#ffb36b]">News</p>
-          <h1>Project updates and product notes</h1>
-          <p>Imported WordPress posts are presented as a clean editorial feed for the rebuilt site.</p>
-        </div>
-      </section>
-      <section className="inshow-section">
-        <div className="shell grid gap-6 md:grid-cols-2">
-          {posts.map((post) => (
-            <Link className="group rounded-lg border border-zinc-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-soft" href={`/news/${post.slug}`} key={post.id}>
-              {post.featuredImage?.publicUrl && (
-                <img className="mb-5 aspect-[16/9] w-full rounded-md object-cover" src={post.featuredImage.publicUrl} alt={post.featuredImage.alt ?? post.title} />
-              )}
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-[#ff881b]">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : "News"}</p>
-              <h2 className="mt-2 text-2xl font-black leading-tight text-[#072941] group-hover:text-[#ff881b]">{post.title}</h2>
-              <p className="mt-3 line-clamp-3 text-sm leading-6 text-zinc-600">{post.excerpt}</p>
-              <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-[#072941]">
-                Read More <ArrowRight size={15} />
-              </span>
+    <main className="news-page">
+      {featuredPost ? (
+        <section className="news-hero">
+          <p>COMPANY NEWS</p>
+          <h1>{featuredPost.title}</h1>
+          <Link className="news-detail-button" href={`/news/${featuredPost.slug}`}>
+            Detail <ArrowRight size={18} />
+          </Link>
+        </section>
+      ) : (
+        <section className="news-hero">
+          <p>COMPANY NEWS</p>
+          <h1>News</h1>
+        </section>
+      )}
+
+      <section className="news-list-section">
+        <div className="news-list-grid">
+          {newsItems.map((post, index) => (
+            <Link className="news-list-card" href={`/news/${post.slug}`} key={post.id}>
+              <div className="news-list-meta">
+                <span>{newsCategoryLabel(post, index)}</span>
+                <time dateTime={post.publishedAt}>{formatNewsDate(post.publishedAt)}</time>
+              </div>
+              <h2>{post.title}</h2>
             </Link>
           ))}
         </div>
       </section>
     </main>
   );
+}
+
+function formatNewsDate(date: string | undefined) {
+  if (!date) return "";
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "";
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+  return `${year}/${month}/${day}`;
+}
+
+function newsCategoryLabel(post: Post, index: number) {
+  const text = `${post.title} ${post.excerpt ?? ""}`.toLowerCase();
+  if (text.includes("airbnb") || text.includes("lifestyle") || text.includes("tiny house")) return "LIFESTYLE";
+  return index === 2 || index === 4 || index === 5 ? "LIFESTYLE" : "COMPANY NEWS";
 }

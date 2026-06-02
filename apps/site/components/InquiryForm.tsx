@@ -6,31 +6,41 @@ import { Send } from "lucide-react";
 export function InquiryForm({
   formType,
   productId,
-  sourceUrl
+  sourceUrl,
 }: {
   formType?: "product_inquiry" | "contact" | string;
   productId?: string;
   sourceUrl?: string;
 }) {
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
+    "idle"
+  );
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("sending");
     const form = new FormData(event.currentTarget);
-    const resolvedFormType = formType ?? (productId ? "product_inquiry" : "contact");
-    const fields = {
+    const resolvedFormType =
+      formType ?? (productId ? "product_inquiry" : "contact");
+    const formName = productId ? "Product Inquiry" : resolvedFormType === "contact" ? "Contact Form" : humanizeFormName(resolvedFormType);
+    const formData = {
+      name: form.get("name"),
+      email: form.get("email"),
       company: form.get("company"),
       phone: form.get("phone"),
       messenger: form.get("messenger"),
-      requirements: form.get("message")
+      requirements: form.get("message"),
+      sourceUrl,
+      productId,
     };
     const response = await fetch("/api/inquiries", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        formName,
+        formData,
         formType: resolvedFormType,
-        subject: productId ? "Product inquiry" : "Contact inquiry",
+        subject: formName,
         name: form.get("name"),
         email: form.get("email"),
         phone: form.get("phone"),
@@ -39,14 +49,15 @@ export function InquiryForm({
         message: form.get("message"),
         productId,
         sourceUrl,
-        fields,
         fieldLabels: {
+          name: "Name",
+          email: "Email",
           company: "Company",
           phone: "Phone / WhatsApp / WeChat",
           messenger: "Messenger ID",
-          requirements: "Product requirements"
-        }
-      })
+          requirements: "Product requirements",
+        },
+      }),
     });
     setStatus(response.ok ? "sent" : "error");
     if (response.ok) event.currentTarget.reset();
@@ -84,12 +95,34 @@ export function InquiryForm({
           required
         />
       </div>
-      <button className="inshow-button" type="submit" disabled={status === "sending"}>
-        <Send size={16} />
-        <span>{status === "sending" ? "Sending" : "Send inquiry"}</span>
+      <button
+        className="inshow-button"
+        type="submit"
+        disabled={status === "sending"}
+      >
+        <Send size={18} />
+        <span className="ml-2">
+          {status === "sending" ? "Sending" : "Send inquiry"}
+        </span>
       </button>
-      {status === "sent" && <p className="rounded-md bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">Your inquiry has been received.</p>}
-      {status === "error" && <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">Submission failed. Please try again.</p>}
+      {status === "sent" && (
+        <p className="rounded-md bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">
+          Your inquiry has been received.
+        </p>
+      )}
+      {status === "error" && (
+        <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">
+          Submission failed. Please try again.
+        </p>
+      )}
     </form>
   );
+}
+
+function humanizeFormName(value: string) {
+  return value
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }

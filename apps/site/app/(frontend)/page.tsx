@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { InquiryForm } from "@/components/InquiryForm";
+import { ReachUsSection } from "@/components/ReachUsSection";
 import { inshowAssets, inshowCategoryTiles } from "@/lib/inshow-assets";
 
 export const dynamic = "force-dynamic";
@@ -70,6 +72,9 @@ export default function HomePage() {
                 <div className="category-tile__body">
                   <h3>{tile.title}</h3>
                   <p>{tile.subtitle}</p>
+                  <span className="category-tile__button">
+                    Details <ArrowRight size={18} />
+                  </span>
                 </div>
               </Link>
             ))}
@@ -150,29 +155,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="home-reach-section">
-        <div className="shell reach-grid">
-          <div>
-            <h2>REACH US AT:</h2>
-            <p>
-              Head office Add : No.666 TianTong South Road, Yingzhou District,
-              Ningbo, China
-              <br />
-              KSA office Add : E33, Dragon World Saudi Arabia, Ground Floor
-              Rimal Center, Riyadh, Saudi Arabia
-              <br />
-              UK office Add : Unit H, Acorn industrial Park, Crayford, London,
-              DA14FL
-              <br />
-              USA office Add : 150 N Santa Anita Ave Suite 300 Arcadia CA91006
-            </p>
-          </div>
-          <div>
-            <h2>OR EMAIL TO:</h2>
-            <strong>sales@cbhtglobal.com</strong>
-          </div>
-        </div>
-      </section>
+      <ReachUsSection />
 
       <section className="home-inquiry-section">
         <div className="home-inquiry-shell">

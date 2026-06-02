@@ -8,21 +8,25 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const form = await request.formData();
-  const sourceSiteUrl = String(form.get("sourceSiteUrl") ?? "");
+  const sourceSiteUrl = normalizeUrl(String(form.get("sourceSiteUrl") ?? "")) ?? "https://inshowhome.com";
+  const replacementSiteUrl = normalizeUrl(String(form.get("replacementSiteUrl") ?? ""));
   const files = form.getAll("files").filter((file): file is File => file instanceof File);
 
-  if (!sourceSiteUrl || files.length === 0) {
-    return NextResponse.json({ error: "sourceSiteUrl and files are required." }, { status: 400 });
+  if (files.length === 0) {
+    return NextResponse.json({ error: "Files are required." }, { status: 400 });
   }
 
   const context = {
     sourceSiteUrl,
     files: await Promise.all(
-      files.map(async (file) => ({
-        filename: file.name,
-        contentType: file.type,
-        text: await file.text()
-      }))
+      files.map(async (file) => {
+        const text = await file.text();
+        return {
+          filename: file.name,
+          contentType: file.type,
+          text: replacementSiteUrl ? replaceSourceUrl(text, sourceSiteUrl, replacementSiteUrl) : text
+        };
+      })
     )
   };
 
@@ -36,7 +40,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       message: "Import staging completed. Supabase is not configured, so no data was persisted.",
       entities: entities.length,
-      counts: countEntities(entities)
+      counts: countEntities(entities),
+      urlReplacement: replacementSiteUrl ? { from: sourceSiteUrl, to: replacementSiteUrl } : undefined
     });
   }
 
@@ -50,7 +55,8 @@ export async function POST(request: Request) {
       imported: result.imported,
       updated: result.updated,
       skipped: result.skipped,
-      counts: result.counts
+      counts: result.counts,
+      urlReplacement: replacementSiteUrl ? { from: sourceSiteUrl, to: replacementSiteUrl } : undefined
     });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Import failed." }, { status: 500 });
@@ -62,4 +68,18 @@ function countEntities(entities: MigrationEntity[]) {
     acc[entity.kind] = (acc[entity.kind] ?? 0) + 1;
     return acc;
   }, {});
+}
+
+function normalizeUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  try {
+    return new URL(trimmed).origin;
+  } catch {
+    return undefined;
+  }
+}
+
+function replaceSourceUrl(text: string, from: string, to: string) {
+  return text.split(from).join(to).split(from.replace(/^https:\/\//, "http://")).join(to).split(from.replace(/^http:\/\//, "https://")).join(to);
 }

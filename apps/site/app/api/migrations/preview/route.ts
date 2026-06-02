@@ -5,21 +5,25 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const form = await request.formData();
-  const sourceSiteUrl = String(form.get("sourceSiteUrl") ?? "");
+  const sourceSiteUrl = normalizeUrl(String(form.get("sourceSiteUrl") ?? "")) ?? "https://inshowhome.com";
+  const replacementSiteUrl = normalizeUrl(String(form.get("replacementSiteUrl") ?? ""));
   const files = form.getAll("files").filter((file): file is File => file instanceof File);
 
-  if (!sourceSiteUrl || files.length === 0) {
-    return NextResponse.json({ error: "sourceSiteUrl and files are required." }, { status: 400 });
+  if (files.length === 0) {
+    return NextResponse.json({ error: "Files are required." }, { status: 400 });
   }
 
   const context = {
     sourceSiteUrl,
     files: await Promise.all(
-      files.map(async (file) => ({
-        filename: file.name,
-        contentType: file.type,
-        text: await file.text()
-      }))
+      files.map(async (file) => {
+        const text = await file.text();
+        return {
+          filename: file.name,
+          contentType: file.type,
+          text: replacementSiteUrl ? replaceSourceUrl(text, sourceSiteUrl, replacementSiteUrl) : text
+        };
+      })
     )
   };
 
@@ -29,5 +33,27 @@ export async function POST(request: Request) {
   }
 
   const preview = await connector.preview(context);
-  return NextResponse.json(preview);
+  return NextResponse.json({
+    ...preview,
+    urlReplacement: replacementSiteUrl
+      ? {
+          from: sourceSiteUrl,
+          to: replacementSiteUrl
+        }
+      : undefined
+  });
+}
+
+function normalizeUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  try {
+    return new URL(trimmed).origin;
+  } catch {
+    return undefined;
+  }
+}
+
+function replaceSourceUrl(text: string, from: string, to: string) {
+  return text.split(from).join(to).split(from.replace(/^https:\/\//, "http://")).join(to).split(from.replace(/^http:\/\//, "https://")).join(to);
 }

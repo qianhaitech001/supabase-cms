@@ -5,7 +5,7 @@ import { createBrowserSupabaseClient, isSupabaseConfigured } from "./supabase";
 export async function listProducts(): Promise<Product[]> {
   if (!isSupabaseConfigured()) return mockProducts;
   try {
-    return await new FrontendDataClient({ supabase: createBrowserSupabaseClient() }).listProducts(100);
+    return await new FrontendDataClient({ supabase: createBrowserSupabaseClient() }).listProducts(200);
   } catch {
     return [];
   }

@@ -33,5 +33,5 @@ export function ProductCard({ product }: { product: Product }) {
 }
 
 function stripHtml(value: string) {
-  return value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return value.replace(/\\n/g, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
