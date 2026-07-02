@@ -1,8 +1,29 @@
-# EdgeOne Supabase CMS Development Guide
+# Supabase CMS Development Guide
 
-本文档面向第一次接触本项目的开发者，说明项目结构、数据结构、前后台开发方式、Supabase 配置、WordPress/WooCommerce 数据迁移，以及通过 CNB 构建并部署到 EdgeOne Pages 的完整流程。
+本文档面向第一次接触本项目的开发者，说明项目结构、数据结构、前后台开发方式、Supabase 配置、WordPress/WooCommerce 数据迁移，以及部署到 Vercel 或 Cloudflare Workers 的流程。
 
 项目定位是外贸 B2B 展示型网站模板：以前台商品展示、文章内容、询盘表单和后台内容管理为核心。它不是购物车/支付/订单系统，当前阶段也不承接 WooCommerce 的交易闭环。
+
+如果你第一次接触 Next.js 或 Supabase，请先按 [新人上手指南](new-developer-onboarding.md) 跑通本地项目，再回到本文档查具体模块。
+
+## 0. 阅读路径
+
+新开发者建议按这个顺序阅读：
+
+1. `README.md`：确认项目定位、常用命令和部署目标。
+2. `docs/new-developer-onboarding.md`：完成本地启动、Supabase 初始化、后台登录和最小验证。
+3. `supabase/README.md`：理解新项目初始化和旧项目升级的区别。
+4. 当前文档：查具体目录、数据结构、开发规则、迁移流程和部署细节。
+5. `docs/frontend-page-contract.md`：开发或生成前台页面前必须阅读。
+
+新人完成上手的最低标准：
+
+- 本地 dev server 能启动。
+- Supabase schema 已执行。
+- 第一个后台用户已设置为 `owner`。
+- `/admin/login` 可以登录。
+- Products、Posts、Settings 页面不会报环境变量或字段缺失。
+- `pnpm --filter @global-trade/site typecheck` 可以通过。
 
 ## 1. 项目概览
 
@@ -12,15 +33,15 @@
 - React 19：前后台页面组件。
 - Tailwind CSS + shadcn 风格基础组件：后台 UI 和部分前台交互。
 - Supabase：Postgres、Auth、RLS、Storage。
-- Lexical：后台富文本编辑器。
+- BlockNote / Lexical：Posts 可按环境变量启用 BlockNote；兼容富文本路径仍保留 Lexical。
 - pnpm workspace：管理 `apps/*` 和 `packages/*`。
-- EdgeOne Pages：部署前台、后台和 API。
-- CNB：代码推送后自动构建并调用 EdgeOne CLI 部署。
+- Vercel：推荐部署路径之一，适合直接部署 Next.js full-stack 应用。
+- Cloudflare Workers + OpenNext：推荐部署路径之一，适合部署 `/admin`、`/api/*`、Server Actions 和动态渲染。
 
 ### 1.2 关键设计取舍
 
 - WordPress/WooCommerce 导入的媒体不下载，不上传到 Supabase Storage，只保存旧站远程 URL。
-- 后台新上传媒体当前默认使用 Supabase Storage，后续可通过环境变量切换到 Ali OSS。
+- 后台新上传媒体通过统一 adapter 上传；本地可用 Supabase Storage，生产可通过环境变量切换到又拍云。
 - Products 只做展示和询盘，不做 cart、checkout、orders、payments、shipping、tax。
 - Products 和 Posts 的前台数据通过稳定 typed data/API 读取，方便后续 AI 生成或重做前台页面。
 - SEO 配置由后台 Settings 和内容表字段控制，不继承旧站 `noindex,nofollow`。
@@ -28,7 +49,7 @@
 ## 2. 目录结构
 
 ```text
-edgeone-supabase-cms/
+supabase-cms-template/
 ├── apps/
 │   └── site/
 │       ├── app/
@@ -43,7 +64,8 @@ edgeone-supabase-cms/
 │       │   ├── ui/                  # shadcn 风格基础组件
 │       │   └── *.tsx                # 前台组件
 │       ├── lib/                     # 数据访问、缓存、认证、导入、配置
-│       ├── edgeone.json             # EdgeOne Pages 构建配置
+│       ├── open-next.config.ts      # Cloudflare OpenNext 配置
+│       ├── wrangler.jsonc           # Cloudflare Workers 配置
 │       ├── next.config.ts
 │       └── package.json
 ├── packages/
@@ -55,7 +77,6 @@ edgeone-supabase-cms/
 ├── docs/
 │   ├── development-guide.md         # 当前文档
 │   └── media-storage-and-i18n-plan.md
-├── .cnb.yml                         # CNB 构建和 EdgeOne 部署流水线
 ├── pnpm-workspace.yaml
 └── package.json
 ```
@@ -127,13 +148,20 @@ NEXT_PUBLIC_SITE_URL=
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`：推荐使用 Supabase 新的 publishable key。
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`：兼容旧 anon key；如果没有 publishable key，会使用它。
 - `SUPABASE_SERVICE_ROLE_KEY`：只允许服务端使用。后台 Users 创建/删除用户需要它。
-- `NEXT_PUBLIC_SITE_URL`：部署后填写正式域名或 EdgeOne 预览域名，用于 SEO、sitemap、robots。
+- `NEXT_PUBLIC_SITE_URL`：部署后填写正式域名、Vercel 预览域名或 Cloudflare 预览域名，用于 SEO、sitemap、robots。
 
 媒体相关：
 
 ```bash
 MEDIA_UPLOAD_PROVIDER=supabase
 SUPABASE_MEDIA_BUCKET=media
+
+UPYUN_BUCKET=
+UPYUN_OPERATOR=
+UPYUN_PASSWORD=
+UPYUN_API_ENDPOINT=https://v0.api.upyun.com
+UPYUN_PUBLIC_BASE_URL=https://inshowhome.metainshow.com
+UPYUN_PATH_PREFIX=uploads/admin
 
 ALI_OSS_ACCESS_KEY_ID=
 ALI_OSS_ACCESS_KEY_SECRET=
@@ -144,11 +172,11 @@ ALI_OSS_PUBLIC_BASE_URL=
 ALI_OSS_PATH_PREFIX=inshow-home
 ```
 
-当前 Ali OSS adapter 只是预留，`MEDIA_UPLOAD_PROVIDER=ali_oss` 还不能直接上传。正式接入前保持：
+可用 provider：
 
-```bash
-MEDIA_UPLOAD_PROVIDER=supabase
-```
+- `supabase`：本地和默认上传路径，使用 Supabase Storage。
+- `upyun`：已实现，又拍云上传路径，使用 `UPYUN_*` 环境变量。
+- `ali_oss`：预留值，当前不能直接上传。
 
 ### 3.3 启动项目
 
@@ -194,7 +222,7 @@ pnpm build
 
 ### 4.2 初始化数据库
 
-进入 Supabase SQL Editor，执行：
+新 Supabase 项目或空数据库，进入 Supabase SQL Editor，执行：
 
 ```sql
 -- 粘贴并执行 supabase/schema.sql
@@ -212,12 +240,14 @@ pnpm build
 - Storage RLS policy。
 - `anon` 和 `authenticated` 的 table grants。
 
-如果项目已存在旧 schema，再按顺序执行：
+如果项目已存在旧 schema，不要重跑 `supabase/schema.sql`。只按顺序执行需要的增量补丁：
 
 ```text
 supabase/migrations/20260529_products_admin_fields.sql
 supabase/migrations/20260530_inquiries_unified_inbox.sql
 ```
+
+完整规则见 `supabase/README.md`：新项目只跑完整 schema，旧项目只跑 migrations。
 
 ### 4.3 创建第一个后台管理员
 
@@ -285,8 +315,8 @@ apps/site/lib/media-storage.ts
 当前规则：
 
 - 导入媒体：写入 `media_assets`，`kind='remote'`，`public_url` 等于旧站 URL。
-- 后台上传媒体：默认上传 Supabase `media` bucket，写入 `media_assets`，`kind='local'`。
-- 后续 Ali OSS：保持 `media_assets.public_url` 合同不变，只替换上传 adapter。
+- 后台上传媒体：通过 `apps/site/lib/media-storage.ts` 统一 adapter 上传，写入 `media_assets`，`kind='local'`。
+- 当前支持 Supabase Storage 和又拍云；未来新增 provider 时保持 `media_assets.public_url` 合同不变，只替换上传 adapter。
 
 ## 5. 数据结构
 
@@ -361,7 +391,7 @@ apps/site/app/(admin)/admin/(protected)/settings/page.tsx
 设计原则：
 
 - 产品、文章、分类、富文本都只依赖 `publicUrl`。
-- 不让前台关心媒体来自 WordPress、Supabase Storage 还是 Ali OSS。
+- 不让前台关心媒体来自 WordPress、Supabase Storage、又拍云还是 Ali OSS。
 
 ### 5.3 `product_categories`
 
@@ -393,7 +423,7 @@ apps/site/app/(admin)/admin/(protected)/settings/page.tsx
 - `sku`
 - `product_type`
 - `summary`
-- `content_json`: Lexical JSON
+- `content_json`: 富文本编辑器 JSON
 - `rich_text`: HTML
 - `legacy_html`: 旧站 HTML
 - `category_ids`
@@ -701,7 +731,7 @@ app/(admin)/admin/(protected)/settings/page.tsx
 app/(admin)/admin/(protected)/users/page.tsx
 ```
 
-`media/page.tsx` 目前保留但不在后台导航展示。原因是后续媒体上传会切换 Ali OSS，需要等 adapter 完成后再正式开放。
+`media/page.tsx` 目前保留但不在后台导航展示。媒体上传应优先通过产品、文章、分类和编辑器中的统一上传入口完成。
 
 ### 7.2 后台导航
 
@@ -783,8 +813,9 @@ components/admin/InquiryDataDialog.tsx
 
 富文本编辑器：
 
-- 使用 Lexical。
-- `content_json` 保存 Lexical JSON。
+- Posts 可通过 `POST_EDITOR_ENGINE=blocknote` 和 `NEXT_PUBLIC_POST_BLOCK_EDITOR_ENABLED=true` 启用 BlockNote 编辑器。
+- 未启用 BlockNote 时，Posts 和其他兼容富文本表单继续使用 Lexical 组件。
+- `content_json` 保存当前编辑器 JSON。
 - `rich_text` 保存 HTML。
 - 导入旧站 HTML 时不能退化为纯文本，应尽量保留标题、图片、链接、表格。
 
@@ -909,85 +940,28 @@ POST /api/migrations/woocommerce-sync
 
 这样不会占用 Supabase 免费 Storage 容量。
 
-## 9. EdgeOne Pages 与 CNB 部署
+## 9. 部署到 Vercel 或 Cloudflare
 
-### 9.1 当前部署方式
+当前项目优先考虑：
 
-当前仓库使用 CNB 触发构建，并在 CI 中通过 EdgeOne CLI 直接上传部署。
+- Vercel：最接近 Next.js 原生运行环境，适合快速上线和预览分支。
+- Cloudflare Workers + OpenNext：适合希望使用 Cloudflare 边缘网络和 Worker 运行时的项目。
 
-配置文件：
+不要按纯静态站点部署。本项目包含 `/admin`、`/api/*`、Server Actions、cookies 和动态渲染。
+
+### 9.1 Vercel 部署
+
+Vercel 项目建议配置：
 
 ```text
-.cnb.yml
-apps/site/edgeone.json
+Root Directory: apps/site
+Install Command: corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm install --frozen-lockfile
+Build Command: pnpm build
+Output Directory: 保持默认
+Node.js Version: 20
 ```
 
-`.cnb.yml` 当前流程：
-
-1. 使用 `node:20` 镜像。
-2. 启用 Corepack。
-3. 激活 `pnpm@9.15.4`。
-4. 安装依赖。
-5. 执行 typecheck。
-6. 构建 `@global-trade/site`。
-7. 进入 `apps/site`。
-8. 执行 `npx edgeone@latest pages deploy`。
-
-当前 `.cnb.yml` 核心配置：
-
-```yaml
-main:
-  push:
-    - imports: https://cnb.cool/qianhaitech/deep_sea/others/EdgeOneKey/-/blob/main/envs.yml
-      stages:
-        - name: Build
-          image: node:20
-          script:
-            - node -v
-            - corepack enable
-            - corepack prepare pnpm@9.15.4 --activate
-            - pnpm -v
-            - pnpm install --frozen-lockfile
-            - pnpm -r typecheck
-            - pnpm --filter @global-trade/site build
-
-        - name: Deploy to EdgeOne Pages
-          image: node:20
-          script:
-            - corepack enable
-            - corepack prepare pnpm@9.15.4 --activate
-            - cd apps/site && PAGES_SOURCE=skills npx edgeone@latest pages deploy -n "${EDGEONE_PROJECT_NAME:-edgeone-supabase-cms}" -t "$EDGEONE_API_TOKEN"
-```
-
-### 9.2 EdgeOne 构建配置
-
-`apps/site/edgeone.json`：
-
-```json
-{
-  "installCommand": "corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm install --frozen-lockfile",
-  "buildCommand": "rm -rf .next && pnpm --filter @global-trade/site build && rm -rf .next/cache",
-  "outputDirectory": ".next",
-  "nodeVersion": "20.18.0"
-}
-```
-
-说明：
-
-- `outputDirectory` 是 `.next`，因为这是 Next.js full-stack 应用，不是纯静态 `out`。
-- 构建结束删除 `.next/cache`，避免 EdgeOne 单文件大小限制被 webpack cache 触发。
-- `nodeVersion` 固定 Node 20。
-
-### 9.3 CNB 环境变量
-
-CNB 需要：
-
-```bash
-EDGEONE_API_TOKEN=
-EDGEONE_PROJECT_NAME=edgeone-supabase-cms
-```
-
-站点运行时还需要把 Supabase 和站点变量配置到 EdgeOne Pages 项目环境变量中：
+Vercel 环境变量：
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
@@ -997,30 +971,85 @@ SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_SITE_URL=
 MEDIA_UPLOAD_PROVIDER=supabase
 SUPABASE_MEDIA_BUCKET=media
+UPYUN_BUCKET=
+UPYUN_OPERATOR=
+UPYUN_PASSWORD=
+UPYUN_API_ENDPOINT=https://v0.api.upyun.com
+UPYUN_PUBLIC_BASE_URL=https://inshowhome.metainshow.com
+UPYUN_PATH_PREFIX=uploads/admin
 ```
 
-如果没有正式域名，`NEXT_PUBLIC_SITE_URL` 可以先填写 EdgeOne 分配的 `edgeone.cool` 地址。部署成功后再更新为自定义域名。
+如果还没有正式域名，`NEXT_PUBLIC_SITE_URL` 可以先填写 Vercel 分配的预览域名。绑定正式域名后再更新。
 
-### 9.4 EdgeOne 404 排查
+### 9.2 Cloudflare Workers + OpenNext 部署
 
-如果部署成功但预览地址显示 EdgeOne 404：
+Cloudflare 配置文件：
 
-1. 确认部署的是 `apps/site/.next`，不是仓库根目录或错误目录。
-2. 确认 `edgeone.json` 的 `outputDirectory` 是 `.next`。
-3. 确认没有把 `.next/cache` 上传。
-4. 确认 EdgeOne 识别为 Next.js full-stack，而不是 pure static。
-5. 查看 EdgeOne 构建日志是否生成 server handler。
-6. 访问 `/admin` 500 时，先检查 Supabase 环境变量是否配置。
+```text
+apps/site/wrangler.jsonc
+apps/site/open-next.config.ts
+```
 
-### 9.5 EdgeOne CLI 官方要点
-
-EdgeOne CLI 支持 CI/CD 中用 token 部署：
+本地构建：
 
 ```bash
-edgeone pages deploy [<directoryOrZip>] -n <projectName> -t <token> [-e <env>]
+pnpm cf:build
 ```
 
-在本项目中，CLI 在 `apps/site` 下运行，让 EdgeOne 根据 `edgeone.json` 自动构建和上传。
+本地预览 Worker：
+
+```bash
+pnpm cf:preview
+```
+
+部署：
+
+```bash
+pnpm cf:deploy
+```
+
+Cloudflare Worker 环境变量同样需要配置 Supabase 和站点变量：
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_SITE_URL=
+MEDIA_UPLOAD_PROVIDER=supabase
+SUPABASE_MEDIA_BUCKET=media
+UPYUN_BUCKET=
+UPYUN_OPERATOR=
+UPYUN_PASSWORD=
+UPYUN_API_ENDPOINT=https://v0.api.upyun.com
+UPYUN_PUBLIC_BASE_URL=https://inshowhome.metainshow.com
+UPYUN_PATH_PREFIX=uploads/admin
+```
+
+OpenNext 构建会生成 `.open-next`，这是构建产物，不要提交到 Git。
+
+### 9.3 部署后检查
+
+部署成功后，依次访问：
+
+```text
+/
+/products
+/news
+/contact
+/admin/login
+/api/inquiries
+```
+
+如果 `/admin/login` 或 `/admin` 报错，优先检查：
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- Supabase RLS 和后台用户角色
+
+如果前台数据没有更新，优先检查后台保存动作是否触发 revalidate，或检查 `FRONTEND_REVALIDATE_SECONDS`。
 
 ## 10. 开发新功能的流程
 
@@ -1073,7 +1102,7 @@ pnpm --filter @global-trade/site typecheck
 
 ### 11.1 后台报 Missing environment variable
 
-通常是 EdgeOne 或本地缺少：
+通常是部署平台或本地缺少：
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL
@@ -1134,26 +1163,25 @@ Thumbnail
 
 或者使用 `/admin/migrations` 中的 WooCommerce REST sync 补充。
 
-### 11.6 EdgeOne 构建失败，提示 pnpm not found
+### 11.6 构建失败，提示 pnpm not found
 
-必须在 CI 中启用 Corepack：
+必须在部署平台或 CI 中启用 Corepack：
 
 ```bash
 corepack enable
 corepack prepare pnpm@9.15.4 --activate
 ```
 
-当前 `.cnb.yml` 已处理。
+Vercel 或其他 CI 平台的 install command 需要包含上述步骤。
 
-### 11.7 EdgeOne 文件大小超限
+### 11.7 Cloudflare OpenNext 构建产物异常
 
-如果日志中出现 `.next/cache/webpack/*.pack` 超过限制，构建后删除 cache：
+如果 Cloudflare/OpenNext 构建异常，优先检查：
 
-```bash
-rm -rf .next/cache
-```
-
-当前 `apps/site/edgeone.json` 已处理。
+- `apps/site/wrangler.jsonc` 是否指向 `.open-next/worker.js`。
+- `apps/site/open-next.config.ts` 是否存在。
+- `pnpm cf:build` 是否可以在本地通过。
+- `.open-next` 是否没有被提交到 Git。
 
 ### 11.8 前台数据更新不及时
 
@@ -1168,7 +1196,7 @@ rm -rf .next/cache
 ## 12. 安全注意事项
 
 - 不要把 `SUPABASE_SERVICE_ROLE_KEY` 暴露到浏览器。
-- 不要把 `.env.local`、`.edgeone/.token`、Ali OSS 密钥提交到 Git。
+- 不要把 `.env.local`、Vercel/Cloudflare token、又拍云操作员密码、Ali OSS 密钥提交到 Git。
 - 新表必须开启 RLS。
 - 新增 public insert policy 时必须限制字段长度和 JSON 大小。
 - 后台写操作必须使用 `requireAdminSession()` 或 `requireAdminRole()`。
@@ -1178,7 +1206,7 @@ rm -rf .next/cache
 
 - Supabase Next.js 指南：https://supabase.com/docs/guides/getting-started/tutorials/with-nextjs
 - Supabase RLS 文档：https://supabase.com/docs/guides/database/postgres/row-level-security
-- EdgeOne CLI 文档：https://pages.edgeone.ai/document/edgeone-cli
-- EdgeOne Pages 框架概览：https://pages.edgeone.ai/document/framework-overview
-- EdgeOne CNB 插件指南：https://pages.edgeone.ai/document/using-cnb-plugin
+- Vercel Next.js 部署文档：https://vercel.com/docs/frameworks/nextjs
+- OpenNext Cloudflare 文档：https://opennext.js.org/cloudflare
+- Cloudflare Workers 文档：https://developers.cloudflare.com/workers/
 - 项目媒体和国际化规划：`docs/media-storage-and-i18n-plan.md`

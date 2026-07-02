@@ -2,13 +2,17 @@ import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
 import { listCategories, listProducts } from "@/lib/data";
 import { categoryPath, categoryTitle, descendantCategoryIds } from "@/lib/frontend-helpers";
+import { getStaticContent } from "@/lib/static-content";
+import { getRequestLocale } from "@/lib/static-locale";
 
 export const revalidate = 300;
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string[] }> }) {
   const { slug } = await params;
+  const locale = await getRequestLocale();
+  const content = getStaticContent(locale);
   const categorySlug = slug.at(-1) ?? "";
-  const [products, categories] = await Promise.all([listProducts(), listCategories()]);
+  const [products, categories] = await Promise.all([listProducts(locale), listCategories(locale)]);
   const category = categories.find((item) => item.slug === categorySlug);
   const categoryIds = category ? descendantCategoryIds(category.id, categories) : new Set<string>();
   const filteredProducts = category ? products.filter((product) => product.categoryIds.some((id) => categoryIds.has(id))) : products;
@@ -18,9 +22,9 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     <main>
       <section className="page-hero">
         <div className="shell">
-          <p className="text-sm font-black uppercase tracking-[0.18em] text-[#ffb36b]">Product Category</p>
+          <p className="text-sm font-black uppercase tracking-[0.18em] text-[#ffb36b]">{content.text.nav.products}</p>
           <h1>{category ? categoryTitle(category) : "Products"}</h1>
-          <p>{category?.description ?? "Browse product catalog."}</p>
+          <p>{category?.description ?? content.text.products.supportDescription}</p>
         </div>
       </section>
       <section className="inshow-section">
@@ -36,11 +40,11 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           )}
           <div className="products columns-3">
             {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard detailLabel={content.text.common.details} key={product.id} product={product} />
             ))}
           </div>
           {filteredProducts.length === 0 && (
-            <div className="rounded-lg border border-zinc-200 bg-white p-10 text-center text-zinc-500">No products found in this category.</div>
+            <div className="rounded-lg border border-zinc-200 bg-white p-10 text-center text-zinc-500">{content.text.common.noProducts}</div>
           )}
         </div>
       </section>

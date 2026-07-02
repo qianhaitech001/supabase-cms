@@ -1,8 +1,8 @@
 {
-  "name": "edgeone-supabase-cms",
+  "name": "supabase-cms-template",
   "version": "0.1.0",
   "private": true,
-  "description": "Reusable foreign-trade showcase site framework with Supabase, EdgeOne Pages, and WordPress/WooCommerce migration tools.",
+  "description": "Reusable foreign-trade showcase site framework with Supabase, Vercel or Cloudflare Workers, and WordPress/WooCommerce migration tools.",
   "packageManager": "pnpm@9.15.4",
   "scripts": {
     "build": "pnpm -r build",

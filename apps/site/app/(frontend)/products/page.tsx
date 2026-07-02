@@ -1,25 +1,48 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import type { Product } from "@global-trade/core";
 import { CategoryAccordion } from "@/components/CategoryAccordion";
-import { ProductCard } from "@/components/ProductCard";
 import { ProductListInquiryForm } from "@/components/ProductListInquiryForm";
 import { ProductSortSelect, type ProductSortValue } from "@/components/ProductSortSelect";
+import { LatestProductsList } from "@/components/storefront/LatestProductsList";
+import { ProductFeatureMosaic } from "@/components/storefront/ProductFeatureMosaic";
+import { ProductGrid } from "@/components/storefront/ProductGrid";
 import { listCategories, listProducts } from "@/lib/data";
 import { categoryTitle, descendantCategoryIds } from "@/lib/frontend-helpers";
 import { inshowAssets } from "@/lib/inshow-assets";
+import { getStaticContent } from "@/lib/static-content";
+import { getRequestLocale } from "@/lib/static-locale";
+import { getStorefrontDataMode } from "@/lib/storefront-mode";
 
 export const revalidate = 300;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const seo = getStaticContent(locale).seo.products;
+  return {
+    title: seo.title,
+    description: seo.description,
+    openGraph: {
+      title: seo.title,
+      description: seo.description
+    }
+  };
+}
 
 export default async function ProductsPage({
   searchParams,
 }: {
   searchParams: Promise<{ category?: string; page?: string; q?: string; sort?: string }>;
 }) {
+  const locale = await getRequestLocale();
   const [{ category, page, q, sort }, products, categories] = await Promise.all([
     searchParams,
-    listProducts(),
-    listCategories(),
+    listProducts(locale),
+    listCategories(locale),
   ]);
+  const content = getStaticContent(locale);
+  const isStaticMode = getStorefrontDataMode() === "static";
+  const text = content.text.products;
   const sortValue = parseSortValue(sort);
   const term = (q ?? "").trim().toLowerCase();
   const selectedCategory = category ? categories.find((item) => item.slug === category) : undefined;
@@ -50,70 +73,27 @@ export default async function ProductsPage({
   return (
     <main>
       <section className="product-list-container">
-        <section className="featured-products">
-          <div className="featured-col-lg">
-            <img src={inshowAssets.featuredProductOne} alt="Time to flourish" />
-            <div className="featured-col-lg_info">
-              <h3>Time to flourish</h3>
-              <p>Spring your space to life with small shifts &amp; big</p>
-              <Link className="detail-btn" href="/products">
-                Details
-              </Link>
-            </div>
-          </div>
-          <div className="featured-col-sm">
-            <img src={inshowAssets.featuredProductTwo} alt="Time to flourish" />
-          </div>
-        </section>
+        <ProductFeatureMosaic largeImage={inshowAssets.featuredProductOne} smallImage={inshowAssets.featuredProductTwo} />
 
         <div className="product-content-block">
           <aside className="left-columns">
             <div className="product-content-category">
               <CategoryAccordion categories={categories} selectedSlug={selectedCategory?.slug} />
             </div>
-            <div className="latest-products">
-              <h2 className="latest-products-title">Latest Products</h2>
-              <ul className="latest-products-list">
-                {latestProducts.map(product => (
-                  <li className="latest-products-item" key={product.id}>
-                    <Link
-                      className="latest-products-item_link"
-                      href={`/products/${product.slug}`}
-                    >
-                      <span className="product-thumbnail">
-                        {product.primaryImage?.publicUrl && (
-                          <img
-                            src={product.primaryImage.publicUrl}
-                            alt={product.title}
-                          />
-                        )}
-                      </span>
-                      <span className="product-info">
-                        <h3>{product.title}</h3>
-                        <p>
-                          {product.summary ??
-                            "Product details and specifications"}
-                        </p>
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <LatestProductsList products={latestProducts} title={text.latestProducts} />
           </aside>
           <div className="product-content-list">
             <div className="product-list-heading">
               <p>
-                Showing {showingStart}-{showingEnd} of {sortedProducts.length} results
-                {selectedCategory ? ` in ${categoryTitle(selectedCategory)}` : ""}
+                {text.showing(showingStart, showingEnd, sortedProducts.length, selectedCategory ? categoryTitle(selectedCategory) : undefined)}
               </p>
-              <ProductSortSelect value={sortValue} />
+              <ProductSortSelect labels={text} value={sortValue} />
             </div>
-            <div className="products columns-3">
-              {pageProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            <ProductGrid
+              detailLabel={content.text.common.details}
+              emptyText={{ title: content.text.common.noProducts, description: content.text.common.noProductsHint }}
+              products={pageProducts}
+            />
             {totalPages > 1 && (
               <ProductPagination
                 currentPage={currentPage}
@@ -127,7 +107,7 @@ export default async function ProductsPage({
         </div>
       </section>
       <section className="product-applications-section">
-        <h2>Light Steel House Construction Applications</h2>
+        <h2>{text.applicationsTitle}</h2>
         <div className="product-application-grid">
           {[
             [
@@ -168,12 +148,9 @@ export default async function ProductsPage({
         </div>
       </section>
       <section className="product-list-support-section">
-        <h2>Contact Customer Support</h2>
-        <p>
-          If you are in need of immediate assistance, you can reach us at
-          +18002208056.
-        </p>
-        <ProductListInquiryForm />
+        <h2>{text.supportTitle}</h2>
+        <p>{text.supportDescription}</p>
+        <ProductListInquiryForm isStaticMode={isStaticMode} locale={locale} />
       </section>
     </main>
   );

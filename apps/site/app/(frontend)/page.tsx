@@ -1,17 +1,36 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { InquiryForm } from "@/components/InquiryForm";
+import type { Metadata } from "next";
 import { ReachUsSection } from "@/components/ReachUsSection";
-import { inshowAssets, inshowCategoryTiles } from "@/lib/inshow-assets";
+import { CategoryShowcase } from "@/components/storefront/CategoryShowcase";
+import { HomeHero } from "@/components/storefront/HomeHero";
+import { SectionHeader } from "@/components/storefront/SectionHeader";
+import { StaticContactPanel } from "@/components/storefront/StaticContactPanel";
+import { inshowAssets } from "@/lib/inshow-assets";
+import { getStaticContent } from "@/lib/static-content";
+import { getRequestLocale } from "@/lib/static-locale";
+import { getStorefrontDataMode } from "@/lib/storefront-mode";
 
 export const revalidate = 300;
 
-const statItems = [
-  ["One-Stop Management", inshowAssets.statOneStop],
-  ["84 Units Subsidiaries", inshowAssets.statSubsidiaries],
-  ["Worldwide Branches", inshowAssets.statBranches],
-  ["USD 6 Billion 2024 Import & Export Volume", inshowAssets.statVolume],
-  ["China’s Top500 Enterprise", inshowAssets.statEnterprise],
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const seo = getStaticContent(locale).seo.home;
+  return {
+    title: seo.title,
+    description: seo.description,
+    openGraph: {
+      title: seo.title,
+      description: seo.description
+    }
+  };
+}
+
+const statIcons = [
+  inshowAssets.statOneStop,
+  inshowAssets.statSubsidiaries,
+  inshowAssets.statBranches,
+  inshowAssets.statVolume,
+  inshowAssets.statEnterprise,
 ];
 
 const projectItems = [
@@ -31,53 +50,27 @@ const certificateItems = [
   inshowAssets.certificateSix,
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const isStaticMode = getStorefrontDataMode() === "static";
+  const locale = await getRequestLocale();
+  const content = getStaticContent(locale);
+  const text = content.text.home;
+
   return (
     <main className="home-page">
-      <section className="inshow-hero">
-        <video autoPlay loop muted playsInline src={inshowAssets.heroVideo} />
-        <div className="inshow-hero__content">
-          <img
-            className="inshow-hero__logo"
-            src={inshowAssets.logo}
-            alt="INSHOW HOME"
-          />
-          <h1>
-            Contributing to the Society by Manufacturing Products that Create
-            the Future
-          </h1>
-          <div className="inshow-hero__actions">
-            <Link className="inshow-button" href="/about-us">
-              Know More
-            </Link>
-          </div>
-        </div>
-      </section>
+      <HomeHero
+        slides={isStaticMode ? content.heroSlides : undefined}
+        ctaHref="/about-us"
+        ctaLabel={content.text.common.knowMore}
+        logoUrl={inshowAssets.logo}
+        title={content.heroSlides[0]?.title}
+        videoUrl={inshowAssets.heroVideo}
+      />
 
       <section className="inshow-section products-section">
         <div className="shell">
-          <div className="inshow-section-header">
-            <h2>PRODUCTS</h2>
-            <p>Discover Our Advanced Products Range</p>
-          </div>
-          <div className="category-showcase">
-            {inshowCategoryTiles.map(tile => (
-              <Link
-                className="category-tile group"
-                href={tile.href}
-                key={tile.title}
-              >
-                <img src={tile.image} alt={tile.title} />
-                <div className="category-tile__body">
-                  <h3>{tile.title}</h3>
-                  <p>{tile.subtitle}</p>
-                  <span className="category-tile__button">
-                    Details <ArrowRight size={18} />
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <SectionHeader title={text.productsTitle} description={text.productsDescription} />
+          <CategoryShowcase items={content.categoryTiles} />
         </div>
       </section>
 
@@ -88,23 +81,19 @@ export default function HomePage() {
           </div>
           <div className="home-about-copy">
             <h2>
-              <strong>ABOUT US</strong>
+              <strong>{text.aboutTitle}</strong>
             </h2>
-            <h3>POWERED BY CBNB, SAILING ON THE WORLD</h3>
+            <h3>{text.aboutEyebrow}</h3>
             <ul>
-              <li>Supply Chain & Logistics & Warehouse Network & Finance</li>
-              <li>Worldwide Branches & Relations</li>
-              <li>40 Years Business Experience</li>
-              <li>Strong R&D Input</li>
-              <li>High Tech Support</li>
+              {text.aboutBullets.map((item) => <li key={item}>{item}</li>)}
             </ul>
           </div>
         </div>
         <div className="home-stats">
-          {statItems.map(([label, icon]) => (
+          {text.stats.map((label, index) => (
             <div className="home-stat-item" key={label}>
               <strong>{label}</strong>
-              <img src={icon} alt="" />
+              <img src={statIcons[index]} alt="" />
             </div>
           ))}
         </div>
@@ -112,24 +101,16 @@ export default function HomePage() {
 
       <section className="home-why-section">
         <div className="shell">
-          <div className="inshow-section-header">
-            <h2>WHY INSHOW HOME</h2>
-            <p>
-              Since 1985, CHINA-BASE has been committed to providing stable,
-              reliable, and high-value services to trading clients. Building on
-              decades of global supply chain networks, logistics, warehousing,
-              and international relations, we are taking our service to the next
-              level with INSHOW HOME.
-            </p>
-          </div>
+          <SectionHeader
+            title={text.whyTitle}
+            description={text.whyDescription}
+          />
         </div>
       </section>
 
       <section className="home-projects-section">
         <div className="shell">
-          <div className="inshow-section-header">
-            <h2>INSHOW HOME PROJECTS</h2>
-          </div>
+          <SectionHeader title={text.projectsTitle} />
           <div className="home-project-grid">
             {projectItems.map(([title, image]) => (
               <article key={title}>
@@ -143,9 +124,7 @@ export default function HomePage() {
 
       <section className="home-cert-section">
         <div className="shell">
-          <div className="inshow-section-header">
-            <h2>CERTIFICATES</h2>
-          </div>
+          <SectionHeader title={text.certificatesTitle} />
           <div className="certificate-strip">
             {certificateItems.map(src => (
               <img src={src} alt="INSHOW HOME certificate" key={src} />
@@ -154,11 +133,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <ReachUsSection />
+      <ReachUsSection locale={locale} />
 
       <section className="home-inquiry-section">
         <div className="home-inquiry-shell">
-          <InquiryForm formType="contact" sourceUrl="/" />
+          {isStaticMode ? <StaticContactPanel compact locale={locale} title={text.quoteTitle} /> : <InquiryForm formType="contact" sourceUrl="/" />}
         </div>
       </section>
     </main>

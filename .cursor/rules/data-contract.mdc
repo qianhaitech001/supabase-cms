@@ -1,0 +1,37 @@
+---
+description: Data, Supabase schema, migration, and API contract rules.
+globs:
+  - "packages/core/**/*"
+  - "packages/migrator/**/*"
+  - "supabase/**/*"
+  - "apps/site/lib/**/*"
+  - "apps/site/app/api/**/*"
+  - "apps/site/app/(admin)/**/*"
+alwaysApply: false
+---
+
+# Data Contract Rules
+
+Authoritative files:
+
+- `packages/core/src/types.ts`
+- `packages/core/src/frontend-client.ts`
+- `apps/site/lib/data.ts`
+- `supabase/schema.sql`
+- `supabase/migrations/*.sql`
+
+Rules:
+
+- `supabase/schema.sql` is the full bootstrap schema for new or empty projects.
+- `supabase/migrations` are additive patches for existing projects.
+- New schema fields must consider full schema, migration path, RLS, grants, indexes, existing data, and frontend types.
+- Public inquiry writes must stay narrow and validated.
+- Admin reads/writes must remain authenticated and role-gated.
+- Imports should upsert and supplement missing fields rather than duplicate or destructively replace records.
+- WordPress/WooCommerce imported media remains remote unless a task explicitly changes that behavior.
+
+Inquiry shape:
+
+- Use the unified `formName` / `formData` model for different forms.
+- Do not create a new table for every new static or frontend form unless explicitly requested.
+

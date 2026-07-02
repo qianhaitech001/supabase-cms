@@ -1,0 +1,4 @@
+interface:
+  display_name: "Supabase CMS Template"
+  short_description: "Project rules for the Supabase CMS template"
+  default_prompt: "Use the Supabase CMS project skill and follow the repository AI development contract before editing."

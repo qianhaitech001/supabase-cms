@@ -1,0 +1,31 @@
+---
+description: UI and design rules for storefront and admin implementation.
+globs:
+  - "apps/site/app/**/*"
+  - "apps/site/components/**/*"
+  - "apps/site/app/globals.css"
+alwaysApply: false
+---
+
+# UI Style Rules
+
+Admin:
+
+- Keep admin screens dense, operational, and shadcn-style.
+- Lists should support pagination, refresh, filters where relevant, status badges, row actions, empty states, and stable table layouts.
+- Edit forms should be grouped by main content, taxonomy, media, SEO, publishing, and source metadata.
+- Avoid marketing-style sections in admin screens.
+
+Storefront:
+
+- Reuse components in `apps/site/components/storefront`.
+- Visual tone should be controlled through `STOREFRONT_THEME`, `apps/site/lib/storefront-theme.ts`, and CSS variables.
+- Do not hardcode one customer brand style into generic page components.
+- Do not place large static content directly in React page files when it belongs in static data/config.
+
+Accessibility and interaction:
+
+- Buttons and links need clear labels.
+- Images need useful `alt` text when content-bearing.
+- Tables and galleries must remain usable on mobile.
+

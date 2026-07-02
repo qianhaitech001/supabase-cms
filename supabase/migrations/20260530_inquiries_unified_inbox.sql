@@ -1,3 +1,10 @@
+-- Existing-project upgrade patch.
+--
+-- Do not run this file after bootstrapping a new project with supabase/schema.sql.
+-- The full schema already includes these columns, indexes, and the public insert
+-- policy. This migration is kept for older deployments with the original
+-- inquiries table.
+
 alter table public.inquiries
   add column if not exists phone text,
   add column if not exists messenger text,
@@ -11,6 +18,12 @@ alter table public.inquiries
 
 create index if not exists inquiries_form_type_created_idx
 on public.inquiries(form_type, created_at desc);
+
+create index if not exists inquiries_status_created_idx
+on public.inquiries(status, created_at desc);
+
+create index if not exists inquiries_product_id_idx
+on public.inquiries(product_id);
 
 drop policy if exists "public can create inquiries" on public.inquiries;
 create policy "public can create inquiries"

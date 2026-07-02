@@ -1,9 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { StaticContactPanel } from "@/components/storefront/StaticContactPanel";
+import type { StaticLocale } from "@/lib/static-content";
 
-export function ProductListInquiryForm() {
+export function ProductListInquiryForm({
+  isStaticMode = false,
+  locale = "en"
+}: {
+  isStaticMode?: boolean;
+  locale?: StaticLocale;
+}) {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  if (isStaticMode) {
+    return <StaticContactPanel compact locale={locale} />;
+  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

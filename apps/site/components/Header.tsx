@@ -1,11 +1,16 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
 import { HeaderNavigation } from "@/components/HeaderNavigation";
-import { listCategories } from "@/lib/data";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ProductSearchForm } from "@/components/storefront/ProductSearchForm";
+import { listCategories, listProducts } from "@/lib/data";
 import { inshowAssets } from "@/lib/inshow-assets";
+import { getStaticContent, getSupportedStaticLocales, isStaticI18nEnabled, type StaticLocale } from "@/lib/static-content";
 
-export async function Header() {
-  const categories = await listCategories();
+export async function Header({ locale }: { locale: StaticLocale }) {
+  const content = getStaticContent(locale);
+  const locales = getSupportedStaticLocales();
+  const shouldShowLanguageSwitcher = isStaticI18nEnabled() && locales.length > 1;
+  const [categories, products] = await Promise.all([listCategories(locale), listProducts(locale)]);
 
   return (
     <header id="masthead" className="site-header">
@@ -19,13 +24,9 @@ export async function Header() {
         </div>
       </div>
       <div className="menu-search-block">
-        <HeaderNavigation categories={categories} />
-        <form className="search-form" action="/products">
-          <button aria-label="Search" className="search-submit inShow-submit" type="submit">
-            <Search size={15} />
-          </button>
-          <input aria-label="Search products" className="search-field" name="q" placeholder="搜索..." type="search" />
-        </form>
+        <HeaderNavigation categories={categories} labels={content.text.nav} />
+        <ProductSearchForm labels={content.text.nav} products={products} />
+        {shouldShowLanguageSwitcher ? <LanguageSwitcher locale={locale} locales={locales} /> : null}
       </div>
     </header>
   );

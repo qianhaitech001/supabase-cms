@@ -6,30 +6,37 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { categoryPath, categoryTitle } from "@/lib/frontend-helpers";
 
-const staticNav = [
-  { label: "Home", href: "/" },
-  { label: "About Us", href: "/about-us" },
-  { label: "News", href: "/news" },
-  { label: "Contact", href: "/contact" }
-];
+type HeaderNavigationLabels = {
+  home: string;
+  about: string;
+  products: string;
+  news: string;
+  contact: string;
+};
 
-export function HeaderNavigation({ categories }: { categories: ProductCategory[] }) {
+export function HeaderNavigation({ categories, labels }: { categories: ProductCategory[]; labels: HeaderNavigationLabels }) {
   const pathname = usePathname();
   const topCategories = categories.filter((category) => !category.parentId).slice(0, 3);
+  const staticNav = [
+    { label: labels.home, href: "/" },
+    { label: labels.about, href: "/about-us" },
+    { label: labels.news, href: "/news" },
+    { label: labels.contact, href: "/contact" }
+  ];
 
   return (
     <>
       <nav id="site-navigation" className="main-navigation" aria-label="Main navigation">
         <ul className="nav-menu">
           <li className={isActivePath(pathname, "/") ? "is-active" : undefined}>
-            <Link href="/">Home</Link>
+            <Link href="/">{labels.home}</Link>
           </li>
           <li className={isActivePath(pathname, "/about-us") ? "is-active" : undefined}>
-            <Link href="/about-us">About Us</Link>
+            <Link href="/about-us">{labels.about}</Link>
           </li>
           <li className={`menu-item-has-children menu-item-product ${isProductsActive(pathname) ? "is-active" : ""}`}>
             <Link href="/products">
-              Products <ChevronDown size={12} strokeWidth={3} />
+              {labels.products} <ChevronDown size={12} strokeWidth={3} />
             </Link>
             <div className="dropdown-content">
               <div className="flex-container">
@@ -54,10 +61,10 @@ export function HeaderNavigation({ categories }: { categories: ProductCategory[]
             </div>
           </li>
           <li className={isActivePath(pathname, "/news") ? "is-active" : undefined}>
-            <Link href="/news">News</Link>
+            <Link href="/news">{labels.news}</Link>
           </li>
           <li className={isActivePath(pathname, "/contact") ? "is-active" : undefined}>
-            <Link href="/contact">Contact</Link>
+            <Link href="/contact">{labels.contact}</Link>
           </li>
         </ul>
       </nav>
@@ -68,7 +75,7 @@ export function HeaderNavigation({ categories }: { categories: ProductCategory[]
           </Link>
         ))}
         <Link className={isProductsActive(pathname) ? "is-active" : undefined} href="/products">
-          Products
+          {labels.products}
         </Link>
       </nav>
     </>

@@ -1,0 +1,41 @@
+---
+description: Deployment and environment variable rules.
+globs:
+  - "README.md"
+  - "docs/**/*"
+  - "apps/site/.env.example"
+  - "apps/site/next.config.ts"
+  - "apps/site/open-next.config.ts"
+  - "apps/site/wrangler.jsonc"
+  - "package.json"
+alwaysApply: false
+---
+
+# Deployment Rules
+
+Supported deployment paths:
+
+- Vercel for full Next.js deployment.
+- Cloudflare Workers + OpenNext for `/admin`, `/api/*`, Server Actions, cookies, and dynamic rendering.
+
+Do not assume pure static hosting for the full app when `/admin` or `/api/*` is required.
+
+Static storefront deployment may use:
+
+- `STOREFRONT_DATA_MODE=static`
+- `STOREFRONT_THEME=<theme>`
+- `NEXT_PUBLIC_SITE_URL=<deployed-url>`
+
+Dynamic deployment also needs Supabase environment variables:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` or `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Media uploads:
+
+- Use `MEDIA_UPLOAD_PROVIDER=supabase` locally by default.
+- Use `MEDIA_UPLOAD_PROVIDER=upyun` for implemented production CDN uploads.
+- Ali OSS is reserved unless an adapter is implemented.
+
+Never commit `.env.local`, production secrets, `.next`, `.open-next`, Vercel output, or Cloudflare build output.

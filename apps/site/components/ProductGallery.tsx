@@ -8,11 +8,13 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/
 type ProductGalleryProps = {
   images: MediaAsset[];
   title: string;
+  fullscreenLabel?: string;
 };
 
-export function ProductGallery({ images, title }: ProductGalleryProps) {
+export function ProductGallery({ images, title, fullscreenLabel = "View product image fullscreen" }: ProductGalleryProps) {
   const galleryImages = useMemo(() => images.filter((image) => image.publicUrl), [images]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [origin, setOrigin] = useState("50% 50%");
   const activeImage = galleryImages[activeIndex];
 
   if (!activeImage) {
@@ -21,11 +23,19 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
 
   return (
     <div className="product-gallery">
-      <div className="product-main-image">
-        <img key={activeImage.publicUrl} src={activeImage.publicUrl} alt={activeImage.alt ?? title} />
+      <div
+        className="product-main-image"
+        onMouseMove={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          const x = ((event.clientX - rect.left) / rect.width) * 100;
+          const y = ((event.clientY - rect.top) / rect.height) * 100;
+          setOrigin(`${x}% ${y}%`);
+        }}
+      >
+        <img key={activeImage.publicUrl} src={activeImage.publicUrl} alt={activeImage.alt ?? title} style={{ transformOrigin: origin }} />
         <Dialog>
           <DialogTrigger asChild>
-            <button className="product-zoom-button" type="button" aria-label="View product image fullscreen">
+            <button className="product-zoom-button" type="button" aria-label={fullscreenLabel}>
               <Search size={18} strokeWidth={2.5} />
             </button>
           </DialogTrigger>

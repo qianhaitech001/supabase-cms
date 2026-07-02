@@ -4,7 +4,10 @@ export const defaultI18nConfig: I18nConfig = {
   defaultLocale: "en",
   fallbackLocale: "en",
   routingStrategy: "none",
-  locales: [{ code: "en", label: "English", enabled: true }]
+  locales: [
+    { code: "en", label: "English", enabled: true },
+    { code: "zh", label: "中文", enabled: true }
+  ]
 };
 
 export function getI18nConfig(config?: Pick<SiteConfig, "i18n" | "locale">): I18nConfig {

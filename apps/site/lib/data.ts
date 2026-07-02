@@ -1,51 +1,53 @@
-import { FrontendDataClient, type Post, type Product, type ProductCategory } from "@global-trade/core";
+import { FrontendDataClient, type LocaleCode, type Post, type Product, type ProductCategory } from "@global-trade/core";
 import { unstable_cache } from "next/cache";
 import { cacheTags, FRONTEND_REVALIDATE_SECONDS } from "./cache-tags";
-import { mockCategories, mockPosts, mockProducts } from "./mock-data";
+import { mockPosts } from "./mock-data";
+import { getStaticCategories, getStaticProducts } from "./static-content";
 import { createBrowserSupabaseClient, isSupabaseConfigured } from "./supabase";
+import { shouldUseStaticStorefrontData } from "./storefront-mode";
 
-export async function listProducts(): Promise<Product[]> {
-  if (!isSupabaseConfigured()) return mockProducts;
+export async function listProducts(locale?: LocaleCode): Promise<Product[]> {
+  if (shouldUseStaticStorefrontData(isSupabaseConfigured())) return getStaticProducts(locale);
   try {
     return await getCachedProducts();
   } catch {
-    return [];
+    return getStaticProducts(locale);
   }
 }
 
-export async function getProduct(slug: string): Promise<Product | null> {
-  if (!isSupabaseConfigured()) return mockProducts.find((product) => product.slug === slug) ?? null;
+export async function getProduct(slug: string, locale?: LocaleCode): Promise<Product | null> {
+  if (shouldUseStaticStorefrontData(isSupabaseConfigured())) return getStaticProducts(locale).find((product) => product.slug === slug) ?? null;
   try {
     return await getCachedProduct(slug);
   } catch {
-    return null;
+    return getStaticProducts(locale).find((product) => product.slug === slug) ?? null;
   }
 }
 
-export async function listCategories(): Promise<ProductCategory[]> {
-  if (!isSupabaseConfigured()) return mockCategories;
+export async function listCategories(locale?: LocaleCode): Promise<ProductCategory[]> {
+  if (shouldUseStaticStorefrontData(isSupabaseConfigured())) return getStaticCategories(locale);
   try {
     return await getCachedCategories();
   } catch {
-    return [];
+    return getStaticCategories(locale);
   }
 }
 
 export async function getPost(slug: string): Promise<Post | null> {
-  if (!isSupabaseConfigured()) return mockPosts.find((post) => post.slug === slug) ?? null;
+  if (shouldUseStaticStorefrontData(isSupabaseConfigured())) return mockPosts.find((post) => post.slug === slug) ?? null;
   try {
     return await getCachedPost(slug);
   } catch {
-    return null;
+    return mockPosts.find((post) => post.slug === slug) ?? null;
   }
 }
 
 export async function listPosts(): Promise<Post[]> {
-  if (!isSupabaseConfigured()) return mockPosts;
+  if (shouldUseStaticStorefrontData(isSupabaseConfigured())) return mockPosts;
   try {
     return await getCachedPosts();
   } catch {
-    return [];
+    return mockPosts;
   }
 }
 

@@ -1,5 +1,5 @@
 export type LocaleCode = "en" | "zh" | string;
-export type MediaUploadProvider = "supabase" | "ali_oss";
+export type MediaUploadProvider = "supabase" | "upyun" | "ali_oss";
 export type I18nRoutingStrategy = "none" | "path-prefix";
 
 export type UserRole = "owner" | "admin" | "editor" | "sales" | "viewer";
@@ -66,9 +66,17 @@ export interface AliOssPublicConfig {
   pathPrefix?: string | undefined;
 }
 
+export interface UpyunPublicConfig {
+  bucket?: string | undefined;
+  apiEndpoint?: string | undefined;
+  publicBaseUrl?: string | undefined;
+  pathPrefix?: string | undefined;
+}
+
 export interface MediaStorageConfig {
   uploadProvider: MediaUploadProvider;
   supabaseBucket?: string | undefined;
+  upyun?: UpyunPublicConfig | undefined;
   aliOss?: AliOssPublicConfig | undefined;
 }
 

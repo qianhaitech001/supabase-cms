@@ -56,8 +56,16 @@ export const siteConfigSchema = z.object({
     .optional(),
   media: z
     .object({
-      uploadProvider: z.enum(["supabase", "ali_oss"]),
+      uploadProvider: z.enum(["supabase", "upyun", "ali_oss"]),
       supabaseBucket: z.string().min(1).optional(),
+      upyun: z
+        .object({
+          bucket: z.string().min(1).optional(),
+          apiEndpoint: z.string().url().optional(),
+          publicBaseUrl: z.string().url().optional(),
+          pathPrefix: z.string().optional()
+        })
+        .optional(),
       aliOss: z
         .object({
           bucket: z.string().min(1).optional(),

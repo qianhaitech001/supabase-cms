@@ -1,9 +1,9 @@
-# Supabase 与 CNB + EdgeOne 部署说明
+# Supabase 与部署流程说明
 
-这份文档只说明两件事：
+这份文档用于演示和讲解项目整体流程，重点说明两件事：
 
 - Supabase 如何连接和初始化。
-- 项目如何通过 CNB 构建并部署到 EdgeOne Pages。
+- 项目如何部署到 Vercel 或 Cloudflare Workers。
 
 ## 1. Supabase 连接流程
 
@@ -43,7 +43,7 @@ SUPABASE_SERVICE_ROLE_KEY=你的 Supabase Service role key
 
 ### 1.3 初始化数据库
 
-打开 Supabase SQL Editor，执行：
+新项目或空数据库，打开 Supabase SQL Editor，执行：
 
 ```text
 supabase/schema.sql
@@ -62,12 +62,7 @@ supabase/schema.sql
 - RLS 权限策略。
 - Supabase Storage 的 `media` bucket。
 
-如果是旧数据库升级，还需要执行：
-
-```text
-supabase/migrations/20260529_products_admin_fields.sql
-supabase/migrations/20260530_inquiries_unified_inbox.sql
-```
+如果是旧数据库升级，不要重跑完整 `schema.sql`，只按顺序执行对应的 `supabase/migrations` 文件。详细规则见 `supabase/README.md`。
 
 ### 1.4 创建第一个后台管理员
 
@@ -111,9 +106,9 @@ http://localhost:3000/admin/login
 
 如果能登录后台，并且 Products、Posts、Settings 页面能正常读取数据，说明 Supabase 连接正常。
 
-## 2. EdgeOne Pages 环境变量
+## 2. 运行时环境变量
 
-部署到 EdgeOne Pages 后，也需要在 EdgeOne 项目中配置同样的运行时环境变量。
+部署到 Vercel 或 Cloudflare Workers 后，需要在对应平台配置同样的运行时环境变量。
 
 必填：
 
@@ -125,118 +120,79 @@ SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_SITE_URL=
 ```
 
-媒体上传当前使用 Supabase Storage：
+媒体上传本地可使用 Supabase Storage，生产可切换到又拍云：
 
 ```bash
 MEDIA_UPLOAD_PROVIDER=supabase
 SUPABASE_MEDIA_BUCKET=media
+# or
+MEDIA_UPLOAD_PROVIDER=upyun
+UPYUN_BUCKET=
+UPYUN_OPERATOR=
+UPYUN_PASSWORD=
+UPYUN_PUBLIC_BASE_URL=https://inshowhome.metainshow.com
+UPYUN_PATH_PREFIX=uploads/admin
 ```
 
-如果暂时没有正式域名，`NEXT_PUBLIC_SITE_URL` 可以先填写 EdgeOne 分配的预览域名。
+如果暂时没有正式域名，`NEXT_PUBLIC_SITE_URL` 可以先填写 Vercel 或 Cloudflare 分配的预览域名。绑定正式域名后再更新。
 
-例如：
+## 3. Vercel 部署流程
 
-```bash
-NEXT_PUBLIC_SITE_URL=https://你的项目.edgeone.cool
-```
+Vercel 适合直接部署 Next.js full-stack 应用。
 
-## 3. CNB + EdgeOne 部署流程
-
-### 3.1 部署方式
-
-当前项目使用：
+建议配置：
 
 ```text
-CNB push 触发构建
-        ↓
-安装 pnpm 和依赖
-        ↓
-执行 typecheck
-        ↓
-构建 Next.js
-        ↓
-调用 EdgeOne CLI
-        ↓
-部署到 EdgeOne Pages
+Root Directory: apps/site
+Install Command: corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm install --frozen-lockfile
+Build Command: pnpm build
+Output Directory: 保持默认
+Node.js Version: 20
 ```
 
-配置文件在：
+部署前确认：
+
+- Vercel 项目已经配置 Supabase 环境变量。
+- `NEXT_PUBLIC_SITE_URL` 已填写预览域名或正式域名。
+- 构建命令没有使用静态导出。
+
+## 4. Cloudflare Workers + OpenNext 部署流程
+
+项目包含 `/admin`、`/api/*`、Server Actions、cookies 和动态渲染。如果部署到 Cloudflare，应走 Workers + OpenNext，而不是纯静态 Pages。
+
+配置文件：
 
 ```text
-.cnb.yml
-apps/site/edgeone.json
+apps/site/wrangler.jsonc
+apps/site/open-next.config.ts
 ```
 
-### 3.2 CNB 需要配置的变量
-
-在 CNB 项目中配置：
+本地构建：
 
 ```bash
-EDGEONE_API_TOKEN=
-EDGEONE_PROJECT_NAME=edgeone-supabase-cms
+pnpm cf:build
 ```
 
-说明：
-
-- `EDGEONE_API_TOKEN` 必填，用于让 CNB 调用 EdgeOne Pages 部署。
-- `EDGEONE_PROJECT_NAME` 可选，不填时默认使用 `edgeone-supabase-cms`。
-- 不要把 EdgeOne token 写进代码仓库。
-
-### 3.3 当前 CNB 构建命令
-
-`.cnb.yml` 中的 Build 阶段会执行：
+本地预览：
 
 ```bash
-node -v
-corepack enable
-corepack prepare pnpm@9.15.4 --activate
-pnpm -v
-pnpm install --frozen-lockfile
-pnpm -r typecheck
-pnpm --filter @global-trade/site build
+pnpm cf:preview
 ```
 
-这里的关键点是：
-
-- 必须启用 Corepack。
-- 必须激活 pnpm。
-- 不要直接使用 npm 构建，否则会出现 `pnpm: not found`。
-
-### 3.4 当前 EdgeOne 部署命令
-
-`.cnb.yml` 中的部署阶段会执行：
+部署：
 
 ```bash
-cd apps/site && PAGES_SOURCE=skills npx edgeone@latest pages deploy -n "${EDGEONE_PROJECT_NAME:-edgeone-supabase-cms}" -t "$EDGEONE_API_TOKEN"
+pnpm cf:deploy
 ```
 
-说明：
+部署前确认：
 
-- 命令在 `apps/site` 目录下执行。
-- `-n` 指定 EdgeOne Pages 项目名。
-- `-t` 使用 CNB 中配置的 EdgeOne API token。
-- `PAGES_SOURCE=skills` 是当前 EdgeOne CLI 部署上下文标识。
+- Cloudflare Worker 已配置 Supabase 环境变量。
+- `apps/site/wrangler.jsonc` 的 `main` 指向 `.open-next/worker.js`。
+- `pnpm cf:build` 能在本地通过。
+- `.open-next` 没有提交到 Git。
 
-### 3.5 EdgeOne 构建配置
-
-`apps/site/edgeone.json` 当前配置：
-
-```json
-{
-  "installCommand": "corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm install --frozen-lockfile",
-  "buildCommand": "rm -rf .next && pnpm --filter @global-trade/site build && rm -rf .next/cache",
-  "outputDirectory": ".next",
-  "nodeVersion": "20.18.0"
-}
-```
-
-重点：
-
-- `outputDirectory` 是 `.next`。
-- 这是 Next.js full-stack 应用，不是纯静态站点。
-- 构建后删除 `.next/cache`，避免上传 webpack cache 导致 EdgeOne 单文件大小超限。
-
-## 4. 部署后检查
+## 5. 部署后检查
 
 部署成功后，依次检查：
 
@@ -249,7 +205,7 @@ cd apps/site && PAGES_SOURCE=skills npx edgeone@latest pages deploy -n "${EDGEON
 /api/inquiries
 ```
 
-如果 `/admin/login` 或 `/admin` 报错，优先检查 EdgeOne Pages 环境变量：
+如果 `/admin/login` 或 `/admin` 报错，优先检查：
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL
@@ -258,35 +214,21 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 ```
 
-如果页面显示 EdgeOne 404，优先检查：
-
-- CNB 是否在 `apps/site` 下执行 EdgeOne 部署。
-- `apps/site/edgeone.json` 的 `outputDirectory` 是否是 `.next`。
-- 构建产物是否被正确上传。
-- 是否误按纯静态站点部署。
-
-如果构建日志出现 `pnpm: not found`，检查 `.cnb.yml` 是否包含：
+如果构建日志出现 `pnpm: not found`，检查部署平台 install command 是否包含：
 
 ```bash
 corepack enable
 corepack prepare pnpm@9.15.4 --activate
 ```
 
-如果构建日志出现单文件超过大小限制，检查是否删除了：
-
-```bash
-.next/cache
-```
-
-## 5. 最小上线清单
+## 6. 最小上线清单
 
 上线前确认：
 
 - Supabase schema 已执行。
 - 第一个后台用户已经设置为 `owner`。
-- EdgeOne Pages 已配置 Supabase 环境变量。
-- CNB 已配置 `EDGEONE_API_TOKEN`。
-- CNB 构建能通过 typecheck。
-- EdgeOne 部署成功。
-- `/admin/login` 能登录。
+- 部署平台已配置 Supabase 环境变量。
+- 构建能通过 typecheck。
 - 前台页面能读取 Supabase 数据。
+- `/admin/login` 能登录。
+- `/api/inquiries` 能提交询盘。

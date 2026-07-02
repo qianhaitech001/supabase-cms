@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "edgeone-supabase-cms",
+  "name": "supabase-cms-template",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-06-17",
   "compatibility_flags": ["nodejs_compat"],

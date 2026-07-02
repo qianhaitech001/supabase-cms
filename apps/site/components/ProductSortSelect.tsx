@@ -5,7 +5,19 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export type ProductSortValue = "default" | "popularity" | "latest" | "price-asc" | "price-desc";
 
-export function ProductSortSelect({ value }: { value: ProductSortValue }) {
+export function ProductSortSelect({
+  value,
+  labels
+}: {
+  value: ProductSortValue;
+  labels: {
+    sortDefault: string;
+    sortPopularity: string;
+    sortLatest: string;
+    sortPriceAsc: string;
+    sortPriceDesc: string;
+  };
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -32,11 +44,11 @@ export function ProductSortSelect({ value }: { value: ProductSortValue }) {
       }}
       value={value}
     >
-      <option value="default">Default sorting</option>
-      <option value="popularity">Sort by popularity</option>
-      <option value="latest">Sort by latest</option>
-      <option value="price-asc">Sort by price: low to high</option>
-      <option value="price-desc">Sort by price: high to low</option>
+      <option value="default">{labels.sortDefault}</option>
+      <option value="popularity">{labels.sortPopularity}</option>
+      <option value="latest">{labels.sortLatest}</option>
+      <option value="price-asc">{labels.sortPriceAsc}</option>
+      <option value="price-desc">{labels.sortPriceDesc}</option>
     </select>
   );
 }

@@ -1,0 +1,42 @@
+---
+description: Rules for building static and Supabase-backed storefront pages.
+globs:
+  - "apps/site/app/(frontend)/**/*"
+  - "apps/site/components/storefront/**/*"
+  - "apps/site/components/Header*.tsx"
+  - "apps/site/components/Footer.tsx"
+  - "apps/site/lib/static-content.ts"
+  - "apps/site/lib/mock-data.ts"
+  - "apps/site/lib/inshow-assets.ts"
+  - "apps/site/lib/data.ts"
+alwaysApply: false
+---
+
+# Storefront Static / Dynamic Rules
+
+Read before storefront work:
+
+- `docs/site-build-operations.md`
+- `docs/frontend-page-contract.md`
+- `docs/frontend-page-prompt-template.md`
+
+Static mode:
+
+- Use `STOREFRONT_DATA_MODE=static`.
+- Confirm whether the target site needs multilingual content. If not, use `NEXT_PUBLIC_STOREFRONT_I18N_ENABLED=false` and maintain only the default locale.
+- Read content from `apps/site/lib/static-content.ts`, `apps/site/lib/mock-data.ts`, and `apps/site/lib/inshow-assets.ts`.
+- Keep text, product data, SEO, contact details, images, and videos centralized in those data/config files.
+- Do not scatter hardcoded product/category/contact data inside page components.
+
+Dynamic mode:
+
+- Use `STOREFRONT_DATA_MODE=supabase`.
+- Read data through `apps/site/lib/data.ts` and `packages/core/src/frontend-client.ts`.
+- Do not write raw Supabase queries inside page components.
+
+For both modes:
+
+- Do not invent fields, props, tables, API responses, or taxonomy relationships.
+- Reuse `apps/site/components/storefront` components first.
+- Use `STOREFRONT_THEME` and theme/CSS variables for visual tone.
+- Keep old imported media as remote URLs.

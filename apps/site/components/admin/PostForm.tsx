@@ -42,7 +42,7 @@ export function PostForm({
   categories = [],
   tags = [],
   blockEditorEnabled = false,
-  editorEngine = "lexical",
+  editorEngine = "blocknote",
   returnTo = "/admin/posts",
   trustedEmbedHosts = []
 }: PostFormProps) {

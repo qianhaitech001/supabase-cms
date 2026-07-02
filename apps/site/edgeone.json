@@ -1,6 +1,0 @@
-{
-  "installCommand": "corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm install --frozen-lockfile",
-  "buildCommand": "rm -rf .next && pnpm --filter @global-trade/site build && rm -rf .next/cache",
-  "outputDirectory": ".next",
-  "nodeVersion": "20.18.0"
-}

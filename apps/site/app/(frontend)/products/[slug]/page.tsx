@@ -5,8 +5,14 @@ import { notFound } from "next/navigation";
 import { ChatNowDialog } from "@/components/ChatNowDialog";
 import { InquiryForm } from "@/components/InquiryForm";
 import { ProductGallery } from "@/components/ProductGallery";
+import { ProductVideoShowcase } from "@/components/storefront/ProductVideoShowcase";
+import { StaticContactPanel } from "@/components/storefront/StaticContactPanel";
 import { getProduct } from "@/lib/data";
 import { getRuntimeSiteConfig } from "@/lib/site-config";
+import { getStaticContent } from "@/lib/static-content";
+import { getRequestLocale } from "@/lib/static-locale";
+import { getStaticProductVideos } from "@/lib/static-storefront";
+import { getStorefrontDataMode } from "@/lib/storefront-mode";
 
 export const revalidate = 300;
 
@@ -17,7 +23,8 @@ function normalizeSummaryHtml(summary?: string | null) {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const [product, siteConfig] = await Promise.all([getProduct(slug), getRuntimeSiteConfig()]);
+  const locale = await getRequestLocale();
+  const [product, siteConfig] = await Promise.all([getProduct(slug, locale), getRuntimeSiteConfig()]);
   if (!product) return {};
   const metadata = createMetadata(siteConfig, product.seo, `/products/${product.slug}`);
   return {
@@ -31,10 +38,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [product, siteConfig] = await Promise.all([getProduct(slug), getRuntimeSiteConfig()]);
+  const locale = await getRequestLocale();
+  const [product, siteConfig] = await Promise.all([getProduct(slug, locale), getRuntimeSiteConfig()]);
   if (!product) notFound();
+  const content = getStaticContent(locale);
+  const labels = content.text.productDetail;
   const images = [product.primaryImage, ...(product.gallery ?? [])].filter((image): image is MediaAsset => Boolean(image?.publicUrl));
   const summaryHtml = normalizeSummaryHtml(product.summary);
+  const isStaticMode = getStorefrontDataMode() === "static";
+  const videoUrls = getStaticProductVideos(product);
 
   return (
     <main className="single-product">
@@ -42,16 +54,29 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <section className="single-product-main">
         <div className="inshow-product-page row">
           <div className="product-gallery-col">
-            <ProductGallery images={images} title={product.title} />
+            <ProductGallery fullscreenLabel={labels.fullscreenImage} images={images} title={product.title} />
           </div>
           <div className="product-summary-col">
             <h1 className="product_title">{product.title}</h1>
             {summaryHtml ? <div className="single-product-summary" dangerouslySetInnerHTML={{ __html: summaryHtml }} /> : null}
             <div className="product-custom-buttons">
-              <a className="button" href="#inquiry">
-                Send Inquiry
-              </a>
-              <ChatNowDialog />
+              {isStaticMode ? (
+                <>
+                  <a className="button" href={`mailto:${content.contact.email}?subject=${encodeURIComponent(`Inquiry: ${product.title}`)}`}>
+                    {content.text.common.sendInquiry}
+                  </a>
+                  <a className="button button-outline" href={`https://wa.me/${content.contact.whatsapp.replace(/\D/g, "")}`} rel="noreferrer" target="_blank">
+                    {content.text.common.chatNow}
+                  </a>
+                </>
+              ) : (
+                <>
+                  <a className="button" href="#inquiry">
+                    {content.text.common.sendInquiry}
+                  </a>
+                  <ChatNowDialog />
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -61,8 +86,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <section className="single-product-section">
           <div className="single-product-container">
             <div className="inshow-section-header">
-              <h2>Specifications</h2>
-              <p>Imported key attributes are kept structured for AI-generated frontend sections.</p>
+              <h2>{labels.specifications}</h2>
+              <p>{labels.specificationsHint}</p>
             </div>
             <div className="rich-text single-product-table">
               <table>
@@ -81,16 +106,21 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       )}
 
       <section className="product-description-and-tabs">
-        <div className="product-description-tab">Description</div>
+        <div className="product-description-tab">{labels.description}</div>
         <div className="single-product-content-grid">
           <article className="rich-text" dangerouslySetInnerHTML={{ __html: product.richText }} />
         </div>
         <div id="inquiry" className="product-contact-form">
-          <h2>Contact Customer Support</h2>
-          <p>If you are in need of immediate assistance, you can reach us at +18002208056.</p>
-          <InquiryForm formType="product_inquiry" productId={product.id} sourceUrl={`/products/${product.slug}`} />
+          <h2>{labels.supportTitle}</h2>
+          <p>{labels.supportDescription}</p>
+          {isStaticMode ? (
+            <StaticContactPanel compact locale={locale} productName={product.title} title={content.text.common.sendInquiry} />
+          ) : (
+            <InquiryForm formType="product_inquiry" productId={product.id} sourceUrl={`/products/${product.slug}`} />
+          )}
         </div>
       </section>
+      <ProductVideoShowcase description={labels.videoDescription} title={labels.videoTitle} videos={videoUrls} />
     </main>
   );
 }

@@ -1,0 +1,35 @@
+---
+description: Project-wide rules for the Supabase CMS template.
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Project Overview
+
+Before editing this repository, read:
+
+- `AI_RULES.md`
+- `docs/ai-development-contract.md`
+- `docs/site-build-operations.md`
+
+This project is a reusable B2B showcase CMS template. It supports:
+
+- Static storefront mode through local typed data.
+- Supabase dynamic mode through backend managed content.
+- WordPress/WooCommerce migration.
+- Product display, posts/news, SEO, media references, and inquiries.
+
+Do not add carts, checkout, orders, payments, shipping, tax, customer accounts, coupons, or full ecommerce transaction workflows unless explicitly requested.
+
+Never commit secrets or build output:
+
+- `.env`
+- `.env.local`
+- `.next`
+- `.open-next`
+- `out`
+- `dist`
+- `coverage`
+- `*.tsbuildinfo`
+

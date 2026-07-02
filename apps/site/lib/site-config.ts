@@ -13,7 +13,7 @@ export const siteConfig: SiteConfig = {
   inquiryWhatsApp: "+86 136-8588-2988",
   defaultSeo: {
     title: "Global Trade Starter | Product Showcase",
-    description: "A reusable foreign-trade showcase site powered by EdgeOne Pages and Supabase.",
+    description: "A reusable foreign-trade showcase site powered by Supabase.",
     noindex: false
   },
   pageSeo: {

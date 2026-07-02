@@ -21,6 +21,7 @@ import {
   Bold,
   Code2,
   GalleryHorizontal,
+  Image as ImageIcon,
   Italic,
   Link2,
   List,
@@ -624,7 +625,7 @@ function EditorToolbar({ editor, insertBlock, onUploadError, stats }: any) {
         {POST_EDITOR_FONT_SIZES.map((size) => <option key={size} value={size}>{size}px</option>)}
       </select>
       <input aria-label="Text color" onChange={(event) => editor.addStyles({ articleTextColor: event.target.value })} title="Text color" type="color" />
-      <button onClick={() => insertBlock({ type: "gallery", props: { items: "[]", columns: 3 } })} title="Gallery" type="button"><GalleryHorizontal size={16} /></button>
+      <button onClick={() => insertBlock({ type: "image" })} title="Image" type="button"><ImageIcon size={16} /></button>
       <TableInsertControl insertBlock={insertBlock} />
       <button onClick={() => insertBlock({ type: "codeBlock", props: { language: "text" }, content: "" })} title="Code" type="button"><Code2 size={16} /></button>
       <button onClick={() => insertBlock({ type: "divider" })} title="Divider" type="button"><Minus size={16} /></button>

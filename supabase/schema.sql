@@ -1,9 +1,28 @@
+-- Supabase CMS Template
+-- Full database bootstrap for a new or empty Supabase project.
+--
+-- Usage:
+--   1. Run this file once in a new Supabase project or empty database.
+--   2. Do not rerun this file against an existing production database.
+--   3. For existing projects, apply files in supabase/migrations/ in order.
+--
+-- This file intentionally contains no project-specific content, users,
+-- domains, API keys, imported WordPress data, or demo business records.
+
+-- ============================================================================
+-- 01. Extensions and enum types
+-- ============================================================================
+
 create extension if not exists pgcrypto;
 
 create type public.user_role as enum ('owner', 'admin', 'editor', 'sales', 'viewer');
 create type public.publish_status as enum ('draft', 'published', 'archived');
 create type public.inquiry_status as enum ('new', 'contacted', 'closed', 'spam');
 create type public.migration_status as enum ('draft', 'previewed', 'running', 'completed', 'failed', 'rolled_back');
+
+-- ============================================================================
+-- 02. Core tables
+-- ============================================================================
 
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -197,6 +216,10 @@ create table public.migration_items (
   unique (source_site_url, source_type, source_id)
 );
 
+-- ============================================================================
+-- 03. Indexes
+-- ============================================================================
+
 create index products_status_updated_idx on public.products(status, updated_at desc);
 create index products_sku_idx on public.products(sku);
 create index posts_status_published_idx on public.posts(status, published_at desc);
@@ -209,6 +232,10 @@ create index migration_batches_created_by_idx on public.migration_batches(create
 create index product_categories_parent_id_idx on public.product_categories(parent_id);
 create index post_categories_parent_id_idx on public.post_categories(parent_id);
 create index site_settings_updated_by_idx on public.site_settings(updated_by);
+
+-- ============================================================================
+-- 04. Row level security
+-- ============================================================================
 
 alter table public.profiles enable row level security;
 alter table public.site_settings enable row level security;
@@ -224,6 +251,10 @@ alter table public.inquiries enable row level security;
 alter table public.redirects enable row level security;
 alter table public.migration_batches enable row level security;
 alter table public.migration_items enable row level security;
+
+-- ============================================================================
+-- 05. Private helpers
+-- ============================================================================
 
 create schema if not exists private;
 revoke all on schema private from public, anon;
@@ -248,6 +279,10 @@ stable
 as $$
   select coalesce(private.current_user_role() = any(allowed), false)
 $$;
+
+-- ============================================================================
+-- 06. Triggers
+-- ============================================================================
 
 create or replace function public.handle_new_auth_user()
 returns trigger
@@ -299,12 +334,20 @@ create trigger inquiries_set_updated_at before update on public.inquiries for ea
 create trigger migration_batches_set_updated_at before update on public.migration_batches for each row execute function public.set_updated_at();
 create trigger migration_items_set_updated_at before update on public.migration_items for each row execute function public.set_updated_at();
 
+-- ============================================================================
+-- 07. Function execution grants
+-- ============================================================================
+
 revoke execute on function private.current_user_role() from public, anon, authenticated;
 revoke execute on function private.has_role(public.user_role[]) from public, anon, authenticated;
 revoke execute on function public.handle_new_auth_user() from public, anon, authenticated;
 revoke execute on function public.set_updated_at() from public, anon, authenticated;
 grant execute on function private.current_user_role() to authenticated;
 grant execute on function private.has_role(public.user_role[]) to authenticated;
+
+-- ============================================================================
+-- 08. Table policies
+-- ============================================================================
 
 create policy "authenticated can read allowed profiles"
 on public.profiles for select
@@ -625,6 +668,10 @@ on public.migration_items for delete
 to authenticated
 using ((select private.has_role(array['owner','admin']::public.user_role[])));
 
+-- ============================================================================
+-- 09. Storage bucket and storage policies
+-- ============================================================================
+
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'media',
@@ -658,6 +705,10 @@ create policy "staff can delete media bucket"
 on storage.objects for delete
 to authenticated
 using (bucket_id = 'media' and (select private.has_role(array['owner','admin','editor']::public.user_role[])));
+
+-- ============================================================================
+-- 10. Data API grants
+-- ============================================================================
 
 grant usage on schema public to anon, authenticated;
 revoke all on all tables in schema public from anon, authenticated;

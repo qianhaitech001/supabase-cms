@@ -2,7 +2,7 @@ import type { Product } from "@global-trade/core";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product, detailLabel = "Details" }: { product: Product; detailLabel?: string }) {
   const imageUrl = product.primaryImage?.publicUrl ?? product.gallery?.[0]?.publicUrl;
   const excerpt = product.summary ?? stripHtml(product.richText).slice(0, 160);
 
@@ -23,7 +23,7 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
           <div className="product-btns">
             <span className="product-btn detail">
-              Details <ArrowRight size={14} />
+              {detailLabel} <ArrowRight size={14} />
             </span>
           </div>
         </Link>
