@@ -342,6 +342,17 @@ revoke execute on function private.current_user_role() from public, anon, authen
 revoke execute on function private.has_role(public.user_role[]) from public, anon, authenticated;
 revoke execute on function public.handle_new_auth_user() from public, anon, authenticated;
 revoke execute on function public.set_updated_at() from public, anon, authenticated;
+
+-- Some Supabase projects include this RLS event-trigger helper by default. It
+-- must remain callable by the database event trigger, but never via the Data API.
+do $$
+begin
+  if to_regprocedure('public.rls_auto_enable()') is not null then
+    revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
+  end if;
+end;
+$$;
+
 grant execute on function private.current_user_role() to authenticated;
 grant execute on function private.has_role(public.user_role[]) to authenticated;
 
