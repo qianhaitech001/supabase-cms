@@ -8,9 +8,9 @@ export const siteConfig: SiteConfig = {
   name: "Global Trade Starter",
   domain: getSiteDomain(),
   locale: "en",
-  inquiryEmail: process.env.INQUIRY_TO_EMAIL ?? "sales@example.com",
-  inquiryPhone: "+86 136-8588-2988",
-  inquiryWhatsApp: "+86 136-8588-2988",
+  inquiryEmail: process.env.INQUIRY_TO_EMAIL ?? "dennisonlien@inshowhome.com",
+  inquiryPhone: "+86 18957884529",
+  inquiryWhatsApp: "+86 18957884529",
   defaultSeo: {
     title: "Global Trade Starter | Product Showcase",
     description: "A reusable foreign-trade showcase site powered by Supabase.",

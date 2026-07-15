@@ -152,17 +152,17 @@ export type StaticAboutContent = {
 };
 
 const staticContactBase = {
-  email: "info/sales@inshowhome.com",
-  salesEmail: "sales@cbhtglobal.com",
-  phone: "+86 136-8588-2988",
-  whatsapp: "+8613685882988",
+  email: "dennisonlien@inshowhome.com",
+  salesEmail: "dennisonlien@inshowhome.com",
+  phone: "+86 18957884529",
+  whatsapp: "+86 18957884529",
   address: "Room.1030, No.1 Building, Logistic Center, Meishan Harbour Ningbo Zhejiang",
   mapImage: inshowAssets.contactMap,
   mapEmbedUrl: "https://www.google.com/maps?q=Meishan%20Harbour%20Ningbo%20Zhejiang&output=embed",
   socialLinks: [
-    { label: "Email", href: "mailto:info/sales@inshowhome.com" },
-    { label: "WhatsApp", href: "https://wa.me/8613685882988" },
-    { label: "Phone", href: "tel:+8613685882988" }
+    { label: "Email", href: "mailto:dennisonlien@inshowhome.com" },
+    { label: "WhatsApp", href: "https://wa.me/8618957884529" },
+    { label: "Phone", href: "tel:+8618957884529" }
   ]
 } satisfies StaticContact;
 
