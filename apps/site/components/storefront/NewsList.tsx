@@ -1,4 +1,4 @@
-import type { Post } from "@global-trade/core";
+import { toPlainText, type Post } from "@global-trade/core";
 import Link from "next/link";
 
 export function NewsList({ posts }: { posts: Post[] }) {
@@ -41,7 +41,7 @@ function formatNewsDate(date: string | undefined) {
 }
 
 function newsCategoryLabel(post: Post, index: number) {
-  const text = `${post.title} ${post.excerpt ?? ""}`.toLowerCase();
+  const text = `${post.title} ${toPlainText(post.excerpt)}`.toLowerCase();
   if (text.includes("airbnb") || text.includes("lifestyle") || text.includes("tiny house")) return "LIFESTYLE";
   return index === 2 || index === 4 || index === 5 ? "LIFESTYLE" : "COMPANY NEWS";
 }

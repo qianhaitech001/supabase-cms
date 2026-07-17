@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { ProductCategory } from "@global-trade/core";
+import { toPlainText, type ProductCategory } from "@global-trade/core";
 import { ChevronDown, ChevronRight, ImageIcon, Pencil, Plus, Rows3 } from "lucide-react";
 import { buildCategoryTree, flattenCategoryTree } from "@/lib/category-tree";
 import { ProductCategoryDialog } from "./ProductCategoryDialog";
@@ -98,7 +98,7 @@ export function ProductCategoryTreeTable({ categories }: { categories: ProductCa
                   <span className="payload-level-badge">{depth === 0 ? "Top" : `L${depth + 1}`}</span>
                 </td>
                 <td>
-                  <span className="payload-description-cell">{category.description || "-"}</span>
+                  <span className="payload-description-cell">{toPlainText(category.description) || "-"}</span>
                 </td>
                 <td>
                   <div className="payload-table-actions">

@@ -1,6 +1,6 @@
 "use client";
 
-import type { Product } from "@global-trade/core";
+import { toPlainText, type Product } from "@global-trade/core";
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -19,7 +19,7 @@ export function ProductSearchForm({
     const term = query.trim().toLowerCase();
     if (term.length < 2) return [];
     return products
-      .filter((product) => `${product.title} ${product.sku ?? ""} ${product.summary ?? ""}`.toLowerCase().includes(term))
+      .filter((product) => `${product.title} ${product.sku ?? ""} ${toPlainText(product.summary)}`.toLowerCase().includes(term))
       .slice(0, 5);
   }, [products, query]);
 

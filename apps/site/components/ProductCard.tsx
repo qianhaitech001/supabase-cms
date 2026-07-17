@@ -1,10 +1,10 @@
-import type { Product } from "@global-trade/core";
+import { toPlainText, type Product } from "@global-trade/core";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 export function ProductCard({ product, detailLabel = "Details" }: { product: Product; detailLabel?: string }) {
   const imageUrl = product.primaryImage?.publicUrl ?? product.gallery?.[0]?.publicUrl;
-  const excerpt = product.summary ?? stripHtml(product.richText).slice(0, 160);
+  const excerpt = toPlainText(product.summary || product.richText).slice(0, 160);
 
   return (
     <article className="product type-product">
@@ -30,8 +30,4 @@ export function ProductCard({ product, detailLabel = "Details" }: { product: Pro
       </div>
     </article>
   );
-}
-
-function stripHtml(value: string) {
-  return value.replace(/\\n/g, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }

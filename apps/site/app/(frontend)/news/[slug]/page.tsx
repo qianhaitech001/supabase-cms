@@ -1,4 +1,4 @@
-import { createMetadata } from "@global-trade/core";
+import { createMetadata, toPlainText } from "@global-trade/core";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPost } from "@/lib/data";
@@ -33,7 +33,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         <div className="shell">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-[#ffb36b]">News</p>
           <h1>{post.title}</h1>
-          {post.excerpt && <p>{post.excerpt}</p>}
+          {post.excerpt && <p>{toPlainText(post.excerpt)}</p>}
         </div>
       </section>
       <section className="inshow-section bg-white">

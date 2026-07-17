@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { toPlainText } from "@global-trade/core";
 import { ProductCard } from "@/components/ProductCard";
 import { listCategories, listProducts } from "@/lib/data";
 import { categoryPath, categoryTitle, descendantCategoryIds } from "@/lib/frontend-helpers";
@@ -24,7 +25,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         <div className="shell">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-[#ffb36b]">{content.text.nav.products}</p>
           <h1>{category ? categoryTitle(category) : "Products"}</h1>
-          <p>{category?.description ?? content.text.products.supportDescription}</p>
+          <p>{toPlainText(category?.description) || content.text.products.supportDescription}</p>
         </div>
       </section>
       <section className="inshow-section">

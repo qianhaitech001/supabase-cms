@@ -1,4 +1,5 @@
 import type { Product, SeoFields, SiteConfig } from "./types";
+import { toPlainText } from "./text";
 
 export interface MetadataLike {
   title: string;
@@ -19,7 +20,7 @@ export interface MetadataLike {
 export function createMetadata(config: SiteConfig, seo?: SeoFields, path = "/"): MetadataLike {
   const canonicalUrl = seo?.canonicalUrl ?? absoluteUrl(config.domain, path);
   const title = seo?.title ?? config.defaultSeo.title ?? config.name;
-  const description = seo?.description ?? config.defaultSeo.description ?? "";
+  const description = toPlainText(seo?.description ?? config.defaultSeo.description ?? "");
   const image = seo?.ogImageUrl ?? config.defaultSeo.ogImageUrl;
 
   const metadata: MetadataLike = {
@@ -55,7 +56,7 @@ export function createProductJsonLd(config: SiteConfig, product: Product): Recor
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.title,
-    description: product.summary ?? product.seo?.description ?? config.defaultSeo.description,
+    description: toPlainText(product.summary ?? product.seo?.description ?? config.defaultSeo.description),
     image: imageUrls,
     url: absoluteUrl(config.domain, `/products/${product.slug}`),
     brand: {

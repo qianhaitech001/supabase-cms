@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import type { Product } from "@global-trade/core";
+import { toPlainText, type Product } from "@global-trade/core";
 import { CategoryAccordion } from "@/components/CategoryAccordion";
 import { ProductListInquiryForm } from "@/components/ProductListInquiryForm";
 import { ProductSortSelect, type ProductSortValue } from "@/components/ProductSortSelect";
@@ -52,7 +52,7 @@ export default async function ProductsPage({
     : products;
   const filtered = term
     ? categoryFiltered.filter(product =>
-        `${product.title} ${product.summary ?? ""} ${product.sku ?? ""}`
+        `${product.title} ${toPlainText(product.summary)} ${product.sku ?? ""}`
           .toLowerCase()
           .includes(term)
       )
