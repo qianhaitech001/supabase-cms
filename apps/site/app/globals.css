@@ -2342,7 +2342,7 @@
     width: 400px;
     height: 200px;
     z-index: -1;
-    background-image: url("https://inshowhome.com/wp-content/themes/inshow/assets/img/menu-img.png");
+    background-image: url("https://inshowhome.metainshow.com/inshow/assets/img/menu-img.png");
     background-size: contain;
     background-repeat: no-repeat;
   }
@@ -2384,7 +2384,7 @@
     margin-left: 6px;
     vertical-align: middle;
     opacity: 0;
-    background-image: url("https://inshowhome.com/wp-content/themes/inshow/assets/img/menu-arrow.png");
+    background-image: url("https://inshowhome.metainshow.com/inshow/assets/img/menu-arrow.png");
     background-size: contain;
     background-repeat: no-repeat;
     transition: opacity 0.1s;

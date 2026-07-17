@@ -30,14 +30,14 @@ export const inshowAssets = {
   statBranches: "https://inshowhome.metainshow.com/uploads/2024/05/carbon_flow.png",
   statVolume: "https://inshowhome.metainshow.com/uploads/2024/05/Vector-1.png",
   statEnterprise: "https://inshowhome.metainshow.com/uploads/2024/05/carbon_security.png",
-  featuredProductOne: "https://inshowhome.com/wp-content/themes/inshow/assets/img/product-list/featured-products-1-new.jpg",
-  featuredProductTwo: "https://inshowhome.com/wp-content/themes/inshow/assets/img/product-list/featured-products-2-new.jpg",
-  detailIconOne: "https://inshowhome.com/wp-content/themes/inshow/assets/img/detail-icon-1.png",
-  detailIconTwo: "https://inshowhome.com/wp-content/themes/inshow/assets/img/detail-icon-2.png",
-  detailIconThree: "https://inshowhome.com/wp-content/themes/inshow/assets/img/detail-icon-3.png",
-  detailIconFour: "https://inshowhome.com/wp-content/themes/inshow/assets/img/detail-icon-4.png",
-  menuPattern: "https://inshowhome.com/wp-content/themes/inshow/assets/img/menu-img.png",
-  menuArrow: "https://inshowhome.com/wp-content/themes/inshow/assets/img/menu-arrow.png"
+  featuredProductOne: "https://inshowhome.metainshow.com/inshow/assets/img/product-list/featured-products-1-new.jpg",
+  featuredProductTwo: "https://inshowhome.metainshow.com/inshow/assets/img/product-list/featured-products-2-new.jpg",
+  detailIconOne: "https://inshowhome.metainshow.com/inshow/assets/img/detail-icon-1.png",
+  detailIconTwo: "https://inshowhome.metainshow.com/inshow/assets/img/detail-icon-2.png",
+  detailIconThree: "https://inshowhome.metainshow.com/inshow/assets/img/detail-icon-3.png",
+  detailIconFour: "https://inshowhome.metainshow.com/inshow/assets/img/detail-icon-4.png",
+  menuPattern: "https://inshowhome.metainshow.com/inshow/assets/img/menu-img.png",
+  menuArrow: "https://inshowhome.metainshow.com/inshow/assets/img/menu-arrow.png"
 };
 
 export const inshowCategoryTiles = [
